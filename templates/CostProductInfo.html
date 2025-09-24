@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ .order.Title }}</title>
+    <link rel="stylesheet" href="/static/styles/CostProductInfo_style.css">
+</head>
+<body>
+<div class="page-root">
+    <header class="topbar">
+        <div class="logo-wrap">
+            <a href="/Nalogimain"><img src="http://localhost:9000/lab1/fns.svg.png" alt="logo" class="logo-img"></a>
+            <div class="service-title">ФЕДЕРАЛЬНАЯ<br>НАЛОГОВАЯ СЛУЖБА</div>
+        </div>
+    </header>
+
+    <main class="description-card">
+        <div class="left-image" style="background-image: url('{{ .order.ImageURL }}');"></div>
+        <div class="right-content">
+            <h1 class="title">{{ .order.Title }}</h1>
+            <div class="desc">
+                <pre>{{ .order.Description }}</pre>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

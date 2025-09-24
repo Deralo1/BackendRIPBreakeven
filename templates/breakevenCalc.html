@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Калькулятор безубыточности</title>
+    <link rel="stylesheet" href="/static/styles/breakevenCalc_style.css">
+    <link rel="stylesheet" href="/static/styles/mainpageNalogi_style.css">
+    <!-- Используем стили из макета и общие стили -->
+</head>
+<body>
+<div class="page-root">
+    <header class="topbar">
+        <div class="logo-wrap">
+            <a href="/Nalogimain">
+                <img src="http://localhost:9000/lab1/fns.svg.png" alt="logo" class="logo-img">
+            </a>
+            <div class="service-title">ФЕДЕРАЛЬНАЯ<br>НАЛОГОВАЯ СЛУЖБА</div>
+        </div>
+    </header>
+
+    <main class="content breakeven-root">
+        <h1 class="page-title">Калькулятор точки безубыточности</h1>
+
+        {{ if .orders }}
+            {{ range .orders }}
+            <section class="card">
+                <div class="card-img" style="background-image: url('{{ .ImageURL }}')"></div>
+                <div class="card-body">
+                    <h2 class="card-heading">{{ .Title }}</h2>
+                    <div class="card-sub">{{ .ShortDescription }}</div>
+                    <div class="radios">
+                        <!-- radio name уникален для каждой карточки, поэтому можно выбрать только 1 вариант для этой карточки -->
+                        <label class="radio-label"><input type="radio" name="cost_type_{{ .ID }}" value="fixed" checked> Постоянные</label>
+                        <label class="radio-label"><input type="radio" name="cost_type_{{ .ID }}" value="variable"> Переменные</label>
+                    </div>
+                    <input class="input" placeholder="Введите стоимость">
+                </div>
+            </section>
+            {{ end }}
+        {{ else }}
+            <div class="no-results">Нет доступных карточек.</div>
+        {{ end }}
+
+        <div class="bottom-row">
+            <input class="input product-cost" placeholder="Введите стоимость единицы продукции">
+            <button class="btn-calc">Рассчитать</button>
+        </div>
+    </main>
+
+    <footer></footer>
+</div>
+</body>
+</html>

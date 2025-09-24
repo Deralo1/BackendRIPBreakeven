@@ -1,0 +1,29 @@
+/* Базовые стили для страницы breakevenCalc по макету */
+body { font-family: 'Open Sans', Arial, sans-serif; background: #F4F7FC; color: #405965; margin:0; }
+.page-root { max-width: 1400px; margin: 24px auto; padding: 8px; }
+.topbar { background: #fff; padding: 12px 24px; display:flex; align-items:center; border-radius:6px; box-shadow: 0 0 4px rgba(0,0,0,0.05); }
+.logo-wrap { display:flex; align-items:center; gap:12px; }
+.logo-img { width:140px; height:auto }
+.service-title { font-family: 'Instrument Serif', serif; font-size:18px; line-height:22px; color:#000 }
+.content.breakeven-root { padding: 24px 8px; }
+.page-title { font-size:40px; margin:12px 0 24px; color:#405965; font-weight:400 }
+.card { background:#fff; box-shadow:0 4px 20px rgba(88,88,88,0.06); border-radius:6px; display:flex; gap:24px; padding:18px; margin-bottom:20px; align-items:center }
+.card-img { width:480px; height:160px; background-size:cover; background-position:center; border-radius:6px; flex-shrink:0 }
+.card-body { flex:1 }
+.card-heading { font-size:36px; margin:0 0 8px; color:#405965; font-weight:400 }
+.card-sub { color:#7a8b94; margin-bottom:12px }
+.radios { margin:8px 0 12px; display:flex; gap:24px; align-items:center }
+.radio-label { display:inline-flex; align-items:center; gap:8px; color:#405965 }
+.input { width:100%; padding:14px 18px; border-radius:4px; border:1px solid transparent; background:#F4F7FC; color:rgba(0,0,0,0.6); font-size:18px }
+.input::placeholder { color: rgba(0,0,0,0.4) }
+.bottom-row { display:flex; gap:12px; align-items:center; margin-top:24px }
+.product-cost { flex:1; padding:14px 18px }
+.btn-calc { background:#F15922; color:#fff; border:none; padding:12px 28px; border-radius:4px; font-size:18px; cursor:pointer }
+
+/* Позиционирование калькулятора на главной — переиспользуется */
+.calculator{position:fixed;right:28px;bottom:28px;display:inline-block}
+.calculator img{width:64px;height:64px}
+
+/* Позиционирование калькулятора на главной — переиспользуется */
+.calculator{position:fixed;right:28px;bottom:28px;display:inline-block}
+.calculator img{width:64px;height:64px}
