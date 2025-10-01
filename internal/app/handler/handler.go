@@ -24,9 +24,9 @@ func (h *Handler) GetOrders(ctx *gin.Context) {
 	var orders []repository.Order
 	var err error
 
-	searchQuery := ctx.Query("query") // получаем значение из поля поиска
-	if searchQuery == "" {            // если поле поиска пусто, то просто получаем из репозитория все записи
-		orders, err = h.Repository.GetOrders()
+	searchQuery := ctx.Query("BreakenevSearch") // получаем значение из поля поиска
+	if searchQuery == "" {                      // если поле поиска пусто, то просто получаем из репозитория все записи
+		orders, err = h.Repository.GetCostsCards()
 		if err != nil {
 			logrus.Error(err)
 		}
@@ -63,7 +63,7 @@ func (h *Handler) GetOrder(ctx *gin.Context) {
 }
 
 func (h *Handler) GetBreakeven(ctx *gin.Context) {
-	orders, err := h.Repository.GetOrders()
+	orders, err := h.Repository.GetCostsCards()
 	if err != nil {
 		logrus.Error(err)
 	}
