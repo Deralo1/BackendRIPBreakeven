@@ -90,23 +90,23 @@ func (r *Repository) GetService(id int) (Service, error) {
 		return Service{}, err // тут у нас уже есть кастомная ошибка из нашего метода, поэтому мы можем просто вернуть ее
 	}
 
-	for _, order := range services {
-		if order.ID == id {
-			return order, nil // если нашли, то просто возвращаем найденный заказ (услугу) без ошибок
+	for _, service := range services {
+		if service.ID == id {
+			return service, nil // если нашли, то просто возвращаем найденный заказ (услугу) без ошибок
 		}
 	}
 	return Service{}, fmt.Errorf("заказ не найден") // тут нужна кастомная ошибка, чтобы понимать на каком этапе возникла ошибка и что произошло
 }
 func (r *Repository) GetServicesByTitle(title string) ([]Service, error) {
-	orders, err := r.GetCostsService()
+	services, err := r.GetCostsService()
 	if err != nil {
-		return []Order{}, err
+		return []Service{}, err
 	}
 
-	var result []Order
-	for _, order := range orders {
-		if strings.Contains(strings.ToLower(order.Title), strings.ToLower(title)) {
-			result = append(result, order)
+	var result []Service
+	for _, service := range services {
+		if strings.Contains(strings.ToLower(service.Title), strings.ToLower(title)) {
+			result = append(result, service)
 		}
 	}
 

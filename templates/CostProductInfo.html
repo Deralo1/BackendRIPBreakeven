@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ .order.Title }}</title>
+    <title>{{ .service.Title }}</title>
     <link rel="stylesheet" href="/static/styles/CostProductInfo_style.css">
 </head>
 <body>
@@ -16,11 +16,11 @@
     </header>
 
     <main class="description-card">
-        <div class="left-image" style="background-image: url('{{ .order.ImageURL }}');"></div>
+        <div class="left-image" style="background-image: url('{{ .service.ImageURL }}');"></div>
         <div class="right-content">
-            <h1 class="title">{{ .order.Title }}</h1>
+            <h1 class="title">{{ .service.Title }}</h1>
             <div class="desc">
-                <pre>{{ .order.Description }}</pre>
+                <pre>{{ .service.Description }}</pre>
             </div>
         </div>
     </main>
