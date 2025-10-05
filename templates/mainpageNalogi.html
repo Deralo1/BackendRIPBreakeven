@@ -27,23 +27,28 @@
                 </form>
             </div>
             <section class="cards-grid">
-                {{ if .orders }}
-                    {{ range .orders }}
-                    <div class="card">
-                        <div class="card-img" style="background-image: url('{{ .ImageURL }}');"></div>
-                        <div class="card-body">
-                            <h3 class="card-title">{{ .Title }}</h3>
-                            <p class="card-sub">{{ .ShortDescription }}</p>
-                            <div class="card-controls">
-                                <a class="btn-details" href="/CostCard/{{ .ID }}">Подробнее</a>
-                            </div>
-                        </div>
-                    </div>
-                    {{ end }}
-                {{ else }}
-                    <div class="no-results">Ничего не найдено.</div>
-                {{ end }}
-            </section>
+    {{ if .orders }}
+        {{ range .orders }}
+        <div class="card">
+            <div class="card-img" style="background-image: url('{{ .ImageURL }}');"></div>
+            <div class="card-body">
+                <h3 class="card-title">{{ .Title }}</h3>
+                <p class="card-sub">{{ .ShortDescription }}</p>
+                
+                <!-- Новый блок с ценой -->
+                <p class="card-price">Цена: {{ .Price }} ₽</p>
+                
+                <div class="card-controls">
+                    <a class="btn-details" href="/CostCard/{{ .ID }}">Подробнее</a>
+                </div>
+            </div>
+        </div>
+        {{ end }}
+    {{ else }}
+        <div class="no-results">Ничего не найдено.</div>
+    {{ end }}
+</section>
+
     </main>
 
     <!-- Калькулятор: ведёт на страницу breakevencalc -->
