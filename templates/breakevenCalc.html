@@ -34,11 +34,20 @@
           <button class="btn-calc">Рассчитать</button>
         </div>
           <div class="result-row">
-          <input
-            class="input product-cost"
-            placeholder="Введите стоимость единицы продукции"
-          />
-        </div>
+            {{ with .breakevenReq }}
+            <div class="result-card">
+              <div class="result-title">Текущая заявка: {{ .RequestID }} — {{ .RequestStatus }}</div>
+              <div class="result-data">Цена единицы продукции: {{ .ProductPrice }} ₽</div>
+              {{ if $.breakEvenUnits }}
+              <div class="result-value">Точка безубыточности: {{ printf "%.2f" $.breakEvenUnits }} ед.</div>
+              {{ else }}
+              <div class="result-value">Точка безубыточности не может быть рассчитана (деление на ноль или цена ≤ переменные)</div>
+              {{ end }}
+            </div>
+            {{ else }}
+            <div class="result-card">Нет данных по заявке.</div>
+            {{ end }}
+          </div>
 
         {{ if .orders }} {{ range .orders }}
         <section class="card">
