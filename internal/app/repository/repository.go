@@ -12,7 +12,7 @@ func NewRepository() (*Repository, error) {
 	return &Repository{}, nil
 }
 
-type Order struct { // вот наша новая структура
+type Service struct { // вот наша новая структура
 	ID               int    // поля структур, которые передаются в шаблон
 	Title            string // ОБЯЗАТЕЛЬНО должны быть написаны с заглавной буквы (то есть публичными)
 	ImageURL         string
@@ -21,10 +21,10 @@ type Order struct { // вот наша новая структура
 	Description      string
 }
 
-func (r *Repository) GetCostsCards() ([]Order, error) {
+func (r *Repository) GetCostsService() ([]Service, error) {
 	// имитируем работу с БД. Типа мы выполнили sql запрос и получили эти строки из БД
-	orders :=
-		[]Order{
+	services :=
+		[]Service{
 			{
 				ID:               1,
 				Title:            "Аренда склада",
@@ -77,28 +77,28 @@ func (r *Repository) GetCostsCards() ([]Order, error) {
 
 	// обязательно проверяем ошибки, и если они появились - передаем выше, то есть хендлеру
 	// тут я снова искусственно обработаю "ошибку" чисто чтобы показать вам как их передавать выше
-	if len(orders) == 0 {
+	if len(services) == 0 {
 		return nil, fmt.Errorf("массив пустой")
 	}
 
-	return orders, nil
+	return services, nil
 }
-func (r *Repository) GetOrder(id int) (Order, error) {
+func (r *Repository) GetService(id int) (Service, error) {
 	// тут у вас будет логика получения нужной услуги, тоже наверное через цикл в первой лабе, и через запрос к БД начиная со второй
-	orders, err := r.GetCostsCards()
+	services, err := r.GetCostsService()
 	if err != nil {
-		return Order{}, err // тут у нас уже есть кастомная ошибка из нашего метода, поэтому мы можем просто вернуть ее
+		return Service{}, err // тут у нас уже есть кастомная ошибка из нашего метода, поэтому мы можем просто вернуть ее
 	}
 
-	for _, order := range orders {
+	for _, order := range services {
 		if order.ID == id {
 			return order, nil // если нашли, то просто возвращаем найденный заказ (услугу) без ошибок
 		}
 	}
-	return Order{}, fmt.Errorf("заказ не найден") // тут нужна кастомная ошибка, чтобы понимать на каком этапе возникла ошибка и что произошло
+	return Service{}, fmt.Errorf("заказ не найден") // тут нужна кастомная ошибка, чтобы понимать на каком этапе возникла ошибка и что произошло
 }
-func (r *Repository) GetOrdersByTitle(title string) ([]Order, error) {
-	orders, err := r.GetCostsCards()
+func (r *Repository) GetServicesByTitle(title string) ([]Service, error) {
+	orders, err := r.GetCostsService()
 	if err != nil {
 		return []Order{}, err
 	}

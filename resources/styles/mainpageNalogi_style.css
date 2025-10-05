@@ -105,7 +105,7 @@ body {
 }
 .card-price {
   margin: 0 0 12px;
-  color: var(--muted);
+  color: #7a8b94;
   font-size: 16px;
 }
 

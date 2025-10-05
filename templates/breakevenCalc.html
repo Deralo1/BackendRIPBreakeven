@@ -58,6 +58,7 @@
           <div class="card-body">
             <h2 class="card-heading">{{ .Title }}</h2>
             <div class="card-sub">{{ .ShortDescription }}</div>
+                            <p class="card-price">Цена: {{ .Price }} ₽</p>
             <div class="radios">
               <!-- radio name уникален для каждой карточки, поэтому можно выбрать только 1 вариант для этой карточки -->
               <label class="radio-label"
@@ -78,7 +79,7 @@
                 Переменные</label
               >
             </div>
-            <input class="input" placeholder="Введите стоимость" />
+            <input class="input" placeholder="Введите величину" />
           </div>
         </section>
         {{ end }} {{ else }}
