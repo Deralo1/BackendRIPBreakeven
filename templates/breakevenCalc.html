@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Калькулятор безубыточности</title>
     <link rel="stylesheet" href="/static/styles/breakevenCalc_style.css" />
-
-    <!-- Используем стили из макета и общие стили -->
   </head>
   <body>
     <div class="page-root">
@@ -26,64 +24,77 @@
       <main class="content breakeven-root">
         <h1 class="page-title">Калькулятор точки безубыточности</h1>
 
+        <!-- Верхняя строка: ввод + объём + ответ -->
         <div class="top-row">
-          <input
-            class="input product-cost"
-            placeholder="Введите стоимость единицы продукции"
-          />
-          <button class="btn-calc">Рассчитать</button>
-        </div>
-          <div class="result-row">
-            {{ with .breakevenReq }}
-            <div class="result-card">
-              <div class="result-title">Текущая заявка: {{ .RequestID }} — {{ .RequestStatus }}</div>
-              <div class="result-data">Цена единицы продукции: {{ .ProductPrice }} ₽</div>
-              {{ if $.breakEvenUnits }}
-              <div class="result-value">Точка безубыточности: {{ printf "%.2f" $.breakEvenUnits }} ед.</div>
-              {{ else }}
-              <div class="result-value">Точка безубыточности не может быть рассчитана (деление на ноль или цена ≤ переменные)</div>
-              {{ end }}
-            </div>
-            {{ else }}
-            <div class="result-card">Нет данных по заявке</div>
-            {{ end }}
+          <div class="input-wrap">
+            <input
+              class="input product-cost"
+              placeholder="Введите стоимость единицы продукции"
+              value="{{ .CalcRequest.AmountProduct }}"
+            />
+            <button class="btn-calc">Рассчитать</button>
           </div>
+          <div class="answer-wrap">
+            <div class="result-card">
+              Точка безубыточности: {{ .CalcRequest.CalcAnswer }} ед.
+            </div>
+          </div>
+        </div>
 
-        {{ if .services }} {{ range .services }}
+        <!-- Карточки -->
+        {{ with .CalcRequest }} {{ range .RequestServices }}
         <section class="card">
           <div
             class="card-img"
-            style="background-image: url('{{ .ImageURL }}')"
+            style="background-image: url('{{ .ServiceID.ImageURL }}')"
           ></div>
           <div class="card-body">
-            <h2 class="card-heading">{{ .Title }}</h2>
-            <div class="card-sub">{{ .ShortDescription }}</div>
-                            <p class="card-price">Цена: {{ .Price }} ₽</p>
+            <h2 class="card-heading">{{ .ServiceID.Title }}</h2>
+            <div class="card-sub">{{ .ServiceID.ShortDescription }}</div>
+            <p class="card-price">Цена: {{ .ServiceID.Price }} ₽</p>
             <div class="radios">
-              <!-- radio name уникален для каждой карточки, поэтому можно выбрать только 1 вариант для этой карточки -->
-              <label class="radio-label"
-                ><input
+              <label class="radio-label">
+                <input
                   type="radio"
-                  name="cost_type_{{ .ID }}"
+                  name="cost_type_{{ .ServiceID.ID }}"
                   value="fixed"
-                  checked
+                  {{
+                  if
+                  eq
+                  .TypeSpend
+                  1
+                  }}checked{{
+                  end
+                  }}
                 />
-                Постоянные</label
-              >
-              <label class="radio-label"
-                ><input
+                Постоянные
+              </label>
+              <label class="radio-label">
+                <input
                   type="radio"
-                  name="cost_type_{{ .ID }}"
+                  name="cost_type_{{ .ServiceID.ID }}"
                   value="variable"
+                  {{
+                  if
+                  eq
+                  .TypeSpend
+                  2
+                  }}checked{{
+                  end
+                  }}
                 />
-                Переменные</label
-              >
+                Переменные
+              </label>
             </div>
-            <input class="input" placeholder="Введите величину" />
+            <input
+              class="input"
+              placeholder="Введите величину"
+              value="{{ .AmountService }}"
+            />
           </div>
         </section>
         {{ end }} {{ else }}
-        <div class="no-results">Нет доступных карточек.</div>
+        <div class="no-results">Нет активной заявки</div>
         {{ end }}
       </main>
 

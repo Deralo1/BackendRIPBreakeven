@@ -22,7 +22,7 @@
         <div class="cards-area">
             <div class="search-row">
                 <form class="search-form" action="/Nalogimain" method="GET">
-                    <input class="search-input" type="text" name="query" placeholder="Поиск" value="{{ .query }}">
+                    <input class="search-input" type="text" name="BreakenevSearch" placeholder="Поиск" value="{{ .query }}">
                     <button class="search-button" type="submit">Найти</button>
                 </form>
             </div>
@@ -38,7 +38,7 @@
                 <p class="card-price">Цена: {{ .Price }} ₽</p>
                 
                 <div class="card-controls">
-                    <a class="btn-details" href="/CostCard/{{ .ID }}">Подробнее</a>
+                    <a class="btn-details" href="/CostService/{{ .ID }}">Подробнее</a>
                 </div>
             </div>
         </div>

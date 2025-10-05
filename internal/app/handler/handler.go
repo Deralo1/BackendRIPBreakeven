@@ -63,20 +63,9 @@ func (h *Handler) GetService(ctx *gin.Context) {
 }
 
 func (h *Handler) GetBreakeven(ctx *gin.Context) {
-	services, err := h.Repository.GetCostsService()
-	if err != nil {
-		logrus.Error(err)
-	}
-
-	// фильтруем только необходимые карточки: Аренда склада и Сырье
-	var filtered []repository.Service
-	for _, s := range services {
-		if s.Title == "Аренда склада" || s.Title == "Сырье" {
-			filtered = append(filtered, s)
-		}
-	}
+	CalcRequest := h.Repository.GetCalcServices()
 
 	ctx.HTML(http.StatusOK, "breakevenCalc.html", gin.H{
-		"services": filtered,
+		"CalcRequest": CalcRequest,
 	})
 }

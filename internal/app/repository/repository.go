@@ -20,6 +20,16 @@ type Service struct { // вот наша новая структура
 	ShortDescription string
 	Description      string
 }
+type BreakevenRequest struct {
+	AmountProduct   int
+	CalcAnswer      int
+	RequestServices []ServiceForRequest
+}
+type ServiceForRequest struct {
+	ServiceID     Service
+	AmountService int
+	TypeSpend     int
+}
 
 func (r *Repository) GetCostsService() ([]Service, error) {
 	// имитируем работу с БД. Типа мы выполнили sql запрос и получили эти строки из БД
@@ -29,7 +39,7 @@ func (r *Repository) GetCostsService() ([]Service, error) {
 				ID:               1,
 				Title:            "Аренда склада",
 				ImageURL:         "http://localhost:9000/lab1/arenda.jpg",
-				Price:            1000,
+				Price:            1000000,
 				ShortDescription: "Средняя стоимость аренды склада в Москве",
 				Description:      "Аренда складских помещений востребована в Москве и области. Стоимость зависит от расположения: в пределах МКАД — 800–1200 ₽/м², в Подмосковье — 500–800 ₽/м². В логистических парках цена ниже, но склады находятся дальше от центра. При выборе учитывают транспортную доступность, наличие охраны и инфраструктуры.",
 			},
@@ -45,7 +55,7 @@ func (r *Repository) GetCostsService() ([]Service, error) {
 				ID:               3,
 				Title:            "Сырьё",
 				ImageURL:         "http://localhost:9000/lab1/siriy.jpg",
-				Price:            1000,
+				Price:            500,
 				ShortDescription: "Стоимость сырья для производства 1кг продукции",
 				Description:      "Сырьё — это материалы, используемые для производства продукции. Цена зависит от вида: металл, древесина, пластик, текстиль и т.д. На стоимость влияют мировые котировки, логистика и объём закупки.",
 			},
@@ -111,4 +121,18 @@ func (r *Repository) GetServicesByTitle(title string) ([]Service, error) {
 	}
 
 	return result, nil
+}
+func (r *Repository) GetCalcServices() *BreakevenRequest {
+	card1, _ := r.GetService(1)
+	card2, _ := r.GetService(2)
+
+	CurrentCalc := &BreakevenRequest{
+		AmountProduct: 120,
+		CalcAnswer:    2233,
+		RequestServices: []ServiceForRequest{
+			{ServiceID: card1, AmountService: 1, TypeSpend: 1},  // В дальнейшем будет 1 постоянные 2 - переменные
+			{ServiceID: card2, AmountService: 10, TypeSpend: 1}, // В дальнейшем будет 1 постоянные 2 - переменные
+		},
+	}
+	return CurrentCalc
 }

@@ -27,7 +27,7 @@ func StartServer() {
 	// справа путь к папке, в которой лежит статика
 
 	r.GET("/Nalogimain", handler.GetAllServices)
-	r.GET("/CostCard/:id", handler.GetService)
+	r.GET("/CostService/:id", handler.GetService)
 	// страница калькулятора безубыточности
 	r.GET("/breakevencalc", handler.GetBreakeven)
 
