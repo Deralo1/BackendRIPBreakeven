@@ -9,19 +9,22 @@ type Repository struct {
 	db *gorm.DB
 }
 
-func NewRepository() (*Repository, error) {
-	return &Repository{}, nil
-}
+//func NewRepository() (*Repository, error) {
+//	return &Repository{}, nil
+//}
 
+/*
 type Service struct { // вот наша новая структура
-	ID               int    // поля структур, которые передаются в шаблон
-	Title            string // ОБЯЗАТЕЛЬНО должны быть написаны с заглавной буквы (то есть публичными)
-	ImageURL         string
-	Price            int
-	ShortDescription string
-	Description      string
-}
-type BreakevenRequest struct {
+
+		ID               int    // поля структур, которые передаются в шаблон
+		Title            string // ОБЯЗАТЕЛЬНО должны быть написаны с заглавной буквы (то есть публичными)
+		ImageURL         string
+		Price            int
+		ShortDescription string
+		Description      string
+	}
+*/
+/*type BreakevenRequest struct {
 	AmountProduct   int
 	CalcAnswer      int
 	RequestServices []ServiceForRequest
@@ -30,7 +33,7 @@ type ServiceForRequest struct {
 	ServiceID     Service
 	AmountService int
 	TypeSpend     int
-}
+}*/
 
 func New(dsn string) (*Repository, error) {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{}) // подключаемся к БД

@@ -20,7 +20,7 @@ func NewHandler(r *repository.Repository) *Handler {
 // RegisterHandler Функция в которой мы отдельно регистрируем маршруты,чтобы не писать все в одном месте
 func (h *Handler) RegisterHandler(router *gin.Engine) {
 	router.GET("/Nalogimain", h.GetAllExpense)
-	router.GET("/CostService/:id", h.GetExpenseByID)
+	router.GET("/CostService/:ExpenseID", h.GetExpenseByID)
 	//router.GET("/breakevencalc", h.GetBreakeven)
 }
 
