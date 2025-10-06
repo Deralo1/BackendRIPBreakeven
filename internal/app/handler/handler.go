@@ -20,31 +20,31 @@ func NewHandler(r *repository.Repository) *Handler {
 	}
 }
 
-func (h *Handler) GetOrders(ctx *gin.Context) {
-	var orders []repository.Order
+func (h *Handler) GetAllServices(ctx *gin.Context) {
+	var services []repository.Service
 	var err error
 
 	searchQuery := ctx.Query("BreakenevSearch") // получаем значение из поля поиска
 	if searchQuery == "" {                      // если поле поиска пусто, то просто получаем из репозитория все записи
-		orders, err = h.Repository.GetCostsCards()
+		services, err = h.Repository.GetCostsService()
 		if err != nil {
 			logrus.Error(err)
 		}
 	} else {
-		orders, err = h.Repository.GetOrdersByTitle(searchQuery) // в ином случае ищем заказ по заголовку
+		services, err = h.Repository.GetServicesByTitle(searchQuery) // в ином случае ищем заказ по заголовку
 		if err != nil {
 			logrus.Error(err)
 		}
 	}
 
 	ctx.HTML(http.StatusOK, "mainpageNalogi.html", gin.H{
-		"time":   time.Now().Format("15:04:05"),
-		"orders": orders,
-		"query":  searchQuery, // передаем введенный запрос обратно на страницу
+		"time":            time.Now().Format("15:04:05"),
+		"services":        services,
+		"BreakenevSearch": searchQuery, // передаем введенный запрос обратно на страницу
 		// в ином случае оно будет очищаться при нажатии на кнопку
 	})
 }
-func (h *Handler) GetOrder(ctx *gin.Context) {
+func (h *Handler) GetService(ctx *gin.Context) {
 	idStr := ctx.Param("id") // получаем id заказа из урла (то есть из /order/:id)
 	// через двоеточие мы указываем параметры, которые потом сможем считать через функцию выше
 	id, err := strconv.Atoi(idStr) // так как функция выше возвращает нам строку, нужно ее преобразовать в int
@@ -52,31 +52,20 @@ func (h *Handler) GetOrder(ctx *gin.Context) {
 		logrus.Error(err)
 	}
 
-	order, err := h.Repository.GetOrder(id)
+	service, err := h.Repository.GetService(id)
 	if err != nil {
 		logrus.Error(err)
 	}
 
 	ctx.HTML(http.StatusOK, "CostProductInfo.html", gin.H{
-		"order": order,
+		"service": service,
 	})
 }
 
 func (h *Handler) GetBreakeven(ctx *gin.Context) {
-	orders, err := h.Repository.GetCostsCards()
-	if err != nil {
-		logrus.Error(err)
-	}
-
-	// фильтруем только необходимые карточки: Аренда склада и Сырье
-	var filtered []repository.Order
-	for _, o := range orders {
-		if o.Title == "Аренда склада" || o.Title == "Сырье" {
-			filtered = append(filtered, o)
-		}
-	}
+	CalcRequest := h.Repository.GetCalcServices()
 
 	ctx.HTML(http.StatusOK, "breakevenCalc.html", gin.H{
-		"orders": filtered,
+		"CalcRequest": CalcRequest,
 	})
 }
