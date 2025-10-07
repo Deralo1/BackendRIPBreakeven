@@ -26,12 +26,16 @@ func (h *Handler) GetAllExpense(ctx *gin.Context) {
 			logrus.Error(err)
 		}
 	}
-
+	calc, err := h.Repository.GetBreakevenCalc(UserID)
+	if err != nil {
+		logrus.Error(err)
+	}
 	ctx.HTML(http.StatusOK, "mainpageNalogi.html", gin.H{
 		"time":            time.Now().Format("15:04:05"),
 		"services":        services,
 		"BreakenevSearch": searchQuery, // передаем введенный запрос обратно на страницу
 		"calc_count":      h.Repository.GetExpensesInCalcCount(UserID),
+		"CalcRequest":     calc,
 		// в ином случае оно будет очищаться при нажатии на кнопку
 	})
 }

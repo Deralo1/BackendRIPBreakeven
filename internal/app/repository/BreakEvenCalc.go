@@ -14,6 +14,7 @@ func (r *Repository) GetBreakevenCalc(userid int) (*ds.BreakevenRequest, error) 
 		First(&calc).Error
 	if err != nil {
 		if err.Error() == "record not found" {
+			// создаем новую заявку
 			newBreakEvenRequest := &ds.BreakevenRequest{
 				CreatorID:    userid,
 				CreationDate: time.Now(),
@@ -69,7 +70,7 @@ func (r *Repository) AddExpenseToCalc(UserID, expenseID int) error {
 	//Проверяем нет ли в корзине
 	var count int64
 	err = r.db.Model(&ds.ExpenseForRequest{}).
-		Where(`"BreakevenRequestID" = ? AND "ExpenseID = ?"`, calc.BreakevenRequestID, expenseID).Count(&count).Error
+		Where(`"BreakevenRequestID" = ? AND "ExpenseID" = ?`, calc.BreakevenRequestID, expenseID).Count(&count).Error
 	if err != nil {
 		return err
 	}
@@ -85,4 +86,7 @@ func (r *Repository) AddExpenseToCalc(UserID, expenseID int) error {
 		TypeSpend:          1,
 	}
 	return r.db.Create(&item).Error
+}
+func (r *Repository) DeleteBreakEvenCalc(CalcID uint) error {
+	return r.db.Exec(`Update Breakeven_Requests SET "BreakEvenStatus"= 'удалён' WHERE "BreakevenRequestID" = ?`, CalcID).Error
 }

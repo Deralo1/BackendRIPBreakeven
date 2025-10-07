@@ -117,25 +117,66 @@ body {
 .card-controls {
   display: flex;
   align-items: center;
+  justify-content: space-between; /* Добавить слева, Подробнее справа */
+  gap: 12px;
+  margin-top: 8px;
 }
-.btn-details {
+
+.inline-form {
+  display: inline-block; /* чтобы форма вела себя как кнопка */
+}
+
+.btn-details,
+.btn-add {
   background: #fff;
   border: 1px solid #3c4256;
   color: var(--muted);
-  padding: 10px 16px;
+  padding: 16px 30px;
   border-radius: 6px;
   cursor: pointer;
+  text-decoration: none;  /* для <a> */
+  display: inline-flex;   /* одинаковая высота и выравнивание */
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
+
+/* Убираем дефолтные стили кнопки */
+.btn-add {
+  font-size: 16px;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid #3c4256; /* совпадает с .btn-details */
+  background: #fff;
+  color: var(--muted);
+}
+
+/* Ховер-эффект одинаковый */
+.btn-details:hover,
+.btn-add:hover {
+  background: #f7f9fc;
+}
+
 .calculator {
   position: fixed;
   right: 28px;
   bottom: 28px;
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;              /* размер круга */
+  height: 80px;
+  background: #fff;         /* белый фон */
+  border-radius: 50%;       /* круг */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* лёгкая тень */
+  cursor: pointer;
 }
+
 .calculator img {
-  width: 64px;
-  height: 64px;
+  width: 70px;              /* уменьшаем иконку, чтобы она вписалась в круг */
+  height: 70px;
 }
+
 .calc-badge {
   position: absolute;
   right: -6px;

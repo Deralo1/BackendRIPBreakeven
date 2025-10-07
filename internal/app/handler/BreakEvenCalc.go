@@ -50,3 +50,17 @@ func (h *Handler) AddExpenseToCalc(ctx *gin.Context) {
 	}
 	ctx.Redirect(http.StatusFound, "/Nalogimain")
 }
+func (h *Handler) DeleteBreakEvenCalc(ctx *gin.Context) {
+	breakevenIDstr := ctx.PostForm("BreakevenRequestID")
+	CalcID, err := strconv.Atoi(breakevenIDstr)
+	if err != nil {
+		h.errorhandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+	err = h.Repository.DeleteBreakEvenCalc(uint(CalcID))
+	if err != nil {
+		h.errorhandler(ctx, http.StatusInternalServerError, err)
+		return
+	}
+	ctx.Redirect(http.StatusFound, "/Nalogimain")
+}

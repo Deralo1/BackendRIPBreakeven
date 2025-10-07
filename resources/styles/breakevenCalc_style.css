@@ -66,9 +66,9 @@ body {
 /* Верхняя строка: ввод + ответ */
 .top-row {
   display: flex;
-  gap: 20px;
-  margin: 12px 0;
+  gap: 12px;
   align-items: center;
+  margin-bottom: 12px; /* выравниваем по вертикали */
 }
 
 .input-wrap {
@@ -83,16 +83,42 @@ body {
   align-items: center;
 }
 
+/* делаем поле результата как кнопку по высоте и уровню */
 .result-card {
-  background: #fff;
-  border-radius: 6px;
-  box-shadow: var(--card-shadow);
-  padding: 16px 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: left;
+  height: 54px;         /* как у кнопок */
+  padding: 0 28px;      /* как у .btn-calc */
   font-size: 18px;
   color: var(--muted);
-  width: 100%;
-  margin-bottom: 12px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: var(--card-shadow);
+  margin: 0;            /* убираем отступ снизу */
+  flex: 1;         /* не растягиваем на всю ширину */
+
 }
+.btn-delete {
+  background: #c62828; /* красный */
+  color: #fff;
+  border: none;
+  padding: 16px 30px;   /* такой же padding, как у .btn-calc */
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-left: 16px;    /* отступ от кнопки "Рассчитать" */
+  transition: background 0.2s ease;
+}
+
+.btn-delete:hover {
+  background: #b71c1c;
+}
+
+.btn-delete:active {
+  background: #8e0000;
+}
+
 
 /* Карточки */
 .card {
