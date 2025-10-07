@@ -12,7 +12,7 @@ func NewRepository() (*Repository, error) {
 	return &Repository{}, nil
 }
 
-type Service struct { // вот наша новая структура
+type Expense struct { // вот наша новая структура
 	ID               int    // поля структур, которые передаются в шаблон
 	Title            string // ОБЯЗАТЕЛЬНО должны быть написаны с заглавной буквы (то есть публичными)
 	ImageURL         string
@@ -23,18 +23,18 @@ type Service struct { // вот наша новая структура
 type BreakevenRequest struct {
 	AmountProduct   int
 	CalcAnswer      int
-	RequestServices []ServiceForRequest
+	RequestExpenses []ExpenseForRequest
 }
-type ServiceForRequest struct {
-	ServiceID     Service
-	AmountService int
+type ExpenseForRequest struct {
+	ExpenseID     Expense
+	AmountExpense int
 	TypeSpend     int
 }
 
-func (r *Repository) GetCostsService() ([]Service, error) {
+func (r *Repository) GetCostsExpense() ([]Expense, error) {
 	// имитируем работу с БД. Типа мы выполнили sql запрос и получили эти строки из БД
 	services :=
-		[]Service{
+		[]Expense{
 			{
 				ID:               1,
 				Title:            "Аренда склада",
@@ -93,11 +93,11 @@ func (r *Repository) GetCostsService() ([]Service, error) {
 
 	return services, nil
 }
-func (r *Repository) GetService(id int) (Service, error) {
+func (r *Repository) GetExpense(id int) (Expense, error) {
 	// тут у вас будет логика получения нужной услуги, тоже наверное через цикл в первой лабе, и через запрос к БД начиная со второй
-	services, err := r.GetCostsService()
+	services, err := r.GetCostsExpense()
 	if err != nil {
-		return Service{}, err // тут у нас уже есть кастомная ошибка из нашего метода, поэтому мы можем просто вернуть ее
+		return Expense{}, err // тут у нас уже есть кастомная ошибка из нашего метода, поэтому мы можем просто вернуть ее
 	}
 
 	for _, service := range services {
@@ -105,15 +105,15 @@ func (r *Repository) GetService(id int) (Service, error) {
 			return service, nil // если нашли, то просто возвращаем найденный заказ (услугу) без ошибок
 		}
 	}
-	return Service{}, fmt.Errorf("заказ не найден") // тут нужна кастомная ошибка, чтобы понимать на каком этапе возникла ошибка и что произошло
+	return Expense{}, fmt.Errorf("заказ не найден") // тут нужна кастомная ошибка, чтобы понимать на каком этапе возникла ошибка и что произошло
 }
-func (r *Repository) GetServicesByTitle(title string) ([]Service, error) {
-	services, err := r.GetCostsService()
+func (r *Repository) GetExpensesByTitle(title string) ([]Expense, error) {
+	services, err := r.GetCostsExpense()
 	if err != nil {
-		return []Service{}, err
+		return []Expense{}, err
 	}
 
-	var result []Service
+	var result []Expense
 	for _, service := range services {
 		if strings.Contains(strings.ToLower(service.Title), strings.ToLower(title)) {
 			result = append(result, service)
@@ -122,16 +122,16 @@ func (r *Repository) GetServicesByTitle(title string) ([]Service, error) {
 
 	return result, nil
 }
-func (r *Repository) GetCalcServices() *BreakevenRequest {
-	card1, _ := r.GetService(1)
-	card2, _ := r.GetService(2)
+func (r *Repository) GetCalcExpenses() *BreakevenRequest {
+	card1, _ := r.GetExpense(1)
+	card2, _ := r.GetExpense(2)
 
 	CurrentCalc := &BreakevenRequest{
 		AmountProduct: 120,
 		CalcAnswer:    2233,
-		RequestServices: []ServiceForRequest{
-			{ServiceID: card1, AmountService: 1, TypeSpend: 1},  // В дальнейшем будет 1 постоянные 2 - переменные
-			{ServiceID: card2, AmountService: 10, TypeSpend: 1}, // В дальнейшем будет 1 постоянные 2 - переменные
+		RequestExpenses: []ExpenseForRequest{
+			{ExpenseID: card1, AmountExpense: 1, TypeSpend: 1},  // В дальнейшем будет 1 постоянные 2 - переменные
+			{ExpenseID: card2, AmountExpense: 10, TypeSpend: 1}, // В дальнейшем будет 1 постоянные 2 - переменные
 		},
 	}
 	return CurrentCalc

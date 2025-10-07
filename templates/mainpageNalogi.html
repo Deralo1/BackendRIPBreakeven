@@ -38,7 +38,7 @@
                 <p class="card-price">Цена: {{ .Price }} ₽</p>
                 
                 <div class="card-controls">
-                    <a class="btn-details" href="/CostService/{{ .ID }}">Подробнее</a>
+                    <a class="btn-details" href="/CostExpense/{{ .ID }}">Подробнее</a>
                 </div>
             </div>
         </div>
@@ -51,7 +51,7 @@
     </main>
 
     <!-- Калькулятор: ведёт на страницу breakevencalc -->
-    <a class="calculator" href="/breakevencalc">
+    <a class="calculator" href="/breakevencalc/{{1}}">
         <img src="http://localhost:9000/lab1/korzinafull.png" alt="calculator">
         <span class="calc-badge">2</span>
     </a>

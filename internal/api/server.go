@@ -26,10 +26,10 @@ func StartServer() {
 	// слева название папки, в которую выгрузится наша статика
 	// справа путь к папке, в которой лежит статика
 
-	r.GET("/Nalogimain", handler.GetAllServices)
-	r.GET("/CostService/:id", handler.GetService)
+	r.GET("/Nalogimain", handler.GetAllExpenses)
+	r.GET("/CostExpense/:id", handler.GetExpense)
 	// страница калькулятора безубыточности
-	r.GET("/breakevencalc", handler.GetBreakeven)
+	r.GET("/breakevencalc/:id", handler.GetBreakeven)
 
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 	log.Println("Server down")

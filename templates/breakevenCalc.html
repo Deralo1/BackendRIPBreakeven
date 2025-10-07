@@ -42,21 +42,21 @@
         </div>
 
         <!-- Карточки -->
-        {{ with .CalcRequest }} {{ range .RequestServices }}
+        {{ with .CalcRequest }} {{ range .RequestExpenses }}
         <section class="card">
           <div
             class="card-img"
-            style="background-image: url('{{ .ServiceID.ImageURL }}')"
+            style="background-image: url('{{ .ExpenseID.ImageURL }}')"
           ></div>
           <div class="card-body">
-            <h2 class="card-heading">{{ .ServiceID.Title }}</h2>
-            <div class="card-sub">{{ .ServiceID.ShortDescription }}</div>
-            <p class="card-price">Цена: {{ .ServiceID.Price }} ₽</p>
+            <h2 class="card-heading">{{ .ExpenseID.Title }}</h2>
+            <div class="card-sub">{{ .ExpenseID.ShortDescription }}</div>
+            <p class="card-price">Цена: {{ .ExpenseID.Price }} ₽</p>
             <div class="radios">
               <label class="radio-label">
                 <input
                   type="radio"
-                  name="cost_type_{{ .ServiceID.ID }}"
+                  name="cost_type_{{ .ExpenseID.ID }}"
                   value="fixed"
                   {{
                   if
@@ -72,7 +72,7 @@
               <label class="radio-label">
                 <input
                   type="radio"
-                  name="cost_type_{{ .ServiceID.ID }}"
+                  name="cost_type_{{ .ExpenseID.ID }}"
                   value="variable"
                   {{
                   if
@@ -89,7 +89,7 @@
             <input
               class="input"
               placeholder="Введите величину"
-              value="{{ .AmountService }}"
+              value="{{ .AmountExpense }}"
             />
           </div>
         </section>

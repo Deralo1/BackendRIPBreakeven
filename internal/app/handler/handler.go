@@ -20,18 +20,18 @@ func NewHandler(r *repository.Repository) *Handler {
 	}
 }
 
-func (h *Handler) GetAllServices(ctx *gin.Context) {
-	var services []repository.Service
+func (h *Handler) GetAllExpenses(ctx *gin.Context) {
+	var services []repository.Expense
 	var err error
 
 	searchQuery := ctx.Query("BreakenevSearch") // получаем значение из поля поиска
 	if searchQuery == "" {                      // если поле поиска пусто, то просто получаем из репозитория все записи
-		services, err = h.Repository.GetCostsService()
+		services, err = h.Repository.GetCostsExpense()
 		if err != nil {
 			logrus.Error(err)
 		}
 	} else {
-		services, err = h.Repository.GetServicesByTitle(searchQuery) // в ином случае ищем заказ по заголовку
+		services, err = h.Repository.GetExpensesByTitle(searchQuery) // в ином случае ищем заказ по заголовку
 		if err != nil {
 			logrus.Error(err)
 		}
@@ -44,7 +44,7 @@ func (h *Handler) GetAllServices(ctx *gin.Context) {
 		// в ином случае оно будет очищаться при нажатии на кнопку
 	})
 }
-func (h *Handler) GetService(ctx *gin.Context) {
+func (h *Handler) GetExpense(ctx *gin.Context) {
 	idStr := ctx.Param("id") // получаем id заказа из урла (то есть из /order/:id)
 	// через двоеточие мы указываем параметры, которые потом сможем считать через функцию выше
 	id, err := strconv.Atoi(idStr) // так как функция выше возвращает нам строку, нужно ее преобразовать в int
@@ -52,7 +52,7 @@ func (h *Handler) GetService(ctx *gin.Context) {
 		logrus.Error(err)
 	}
 
-	service, err := h.Repository.GetService(id)
+	service, err := h.Repository.GetExpense(id)
 	if err != nil {
 		logrus.Error(err)
 	}
@@ -63,7 +63,7 @@ func (h *Handler) GetService(ctx *gin.Context) {
 }
 
 func (h *Handler) GetBreakeven(ctx *gin.Context) {
-	CalcRequest := h.Repository.GetCalcServices()
+	CalcRequest := h.Repository.GetCalcExpenses()
 
 	ctx.HTML(http.StatusOK, "breakevenCalc.html", gin.H{
 		"CalcRequest": CalcRequest,
