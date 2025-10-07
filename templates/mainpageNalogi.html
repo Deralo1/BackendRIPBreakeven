@@ -51,10 +51,13 @@
     </main>
 
     <!-- Калькулятор: ведёт на страницу breakevencalc -->
-    <a class="calculator" href="/breakevencalc">
-        <img src="http://localhost:9000/lab1/korzinafull.png" alt="calculator">
-        <span class="calc-badge">2</span>
-    </a>
+<a class="calculator" href="/breakevencalc/{{ .CalcRequest.BreakevenRequestID }}">
+    <img src="http://localhost:9000/lab1/korzinafull.png" alt="calculator">
+    {{ if gt .calc_count 0 }}
+        <span class="calc-badge">{{ .calc_count }}</span>
+    {{ end }}
+</a>
+
 
 </div>
 </body>

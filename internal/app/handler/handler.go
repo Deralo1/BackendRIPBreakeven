@@ -21,7 +21,9 @@ func NewHandler(r *repository.Repository) *Handler {
 func (h *Handler) RegisterHandler(router *gin.Engine) {
 	router.GET("/Nalogimain", h.GetAllExpense)
 	router.GET("/CostService/:ExpenseID", h.GetExpenseByID)
+	router.GET("/breakevencalc/:BreakevenRequestID", h.GetBreakeven)
 	//router.GET("/breakevencalc", h.GetBreakeven)
+	router.POST("/breakevencalc/addexpense", h.AddExpenseToCalc)
 }
 
 // Получаем статику
