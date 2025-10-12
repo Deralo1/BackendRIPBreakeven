@@ -29,12 +29,12 @@ func main() {
 	}
 	cfg, err := config.NewConfig()
 	if err != nil {
-		logrus.Fatal("Failed to load config:%v", err)
+		logrus.Fatal("Failed to load config:", err)
 	}
 	//Инициализация minio клиента
 	minioclient, err := config.NewMinioClient(cfg.Minio)
 	if err != nil {
-		logrus.Fatal("Failed to inizialize Minio client: %v", err)
+		logrus.Fatal("Failed to inizialize Minio client:", err)
 	}
 	hand := handler.NewHandler(rep, minioclient, cfg.Minio.BucketName)
 	// инициалазиция обработчика

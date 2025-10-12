@@ -14,9 +14,11 @@ type Handler struct {
 	BucketName  string
 }
 
-func NewHandler(r *repository.Repository) *Handler {
+func NewHandler(r *repository.Repository, minioClient *minio.Client, bucketName string) *Handler {
 	return &Handler{
-		Repository: r,
+		Repository:  r,
+		MinioClient: minioClient,
+		BucketName:  bucketName,
 	}
 }
 
