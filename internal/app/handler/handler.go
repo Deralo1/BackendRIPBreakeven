@@ -4,11 +4,14 @@ import (
 	"Backeven/internal/app/repository"
 
 	"github.com/gin-gonic/gin"
+	"github.com/minio/minio-go/v7"
 	"github.com/sirupsen/logrus"
 )
 
 type Handler struct {
-	Repository *repository.Repository
+	Repository  *repository.Repository
+	MinioClient *minio.Client
+	BucketName  string
 }
 
 func NewHandler(r *repository.Repository) *Handler {

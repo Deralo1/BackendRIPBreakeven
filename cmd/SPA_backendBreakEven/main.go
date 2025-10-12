@@ -27,9 +27,17 @@ func main() {
 	if errRep != nil {
 		logrus.Fatalf("error initializing repository: %v", errRep)
 	}
-
-	hand := handler.NewHandler(rep)
-
+	cfg, err := config.NewConfig()
+	if err != nil {
+		logrus.Fatal("Failed to load config:%v", err)
+	}
+	//Инициализация minio клиента
+	minioclient, err := config.NewMinioClient(cfg.Minio)
+	if err != nil {
+		logrus.Fatal("Failed to inizialize Minio client: %v", err)
+	}
+	hand := handler.NewHandler(rep, minioclient, cfg.Minio.BucketName)
+	// инициалазиция обработчика
 	application := pkg.NewApp(conf, router, hand)
 	application.RunApp()
 }
