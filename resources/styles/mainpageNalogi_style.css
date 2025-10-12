@@ -171,6 +171,11 @@ body {
   box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* лёгкая тень */
   cursor: pointer;
 }
+.calculator.disabled {
+  pointer-events: none;     /* отключает клики */
+  cursor: default;          /* обычный курсор */            /* визуально показывает, что элемент неактивен */
+}
+
 
 .calculator img {
   width: 70px;              /* уменьшаем иконку, чтобы она вписалась в круг */

@@ -88,8 +88,8 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: left;
-  height: 54px;         /* как у кнопок */
-  padding: 0 28px;      /* как у .btn-calc */
+  height: 54px;         
+  padding: 0 28px;      
   font-size: 18px;
   color: var(--muted);
   background: #fff;
@@ -103,7 +103,7 @@ body {
   background: #c62828; /* красный */
   color: #fff;
   border: none;
-  padding: 16px 30px;   /* такой же padding, как у .btn-calc */
+  padding: 16px 30px;   
   border-radius: 4px;
   font-size: 16px;
   cursor: pointer;
@@ -207,15 +207,7 @@ body {
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
 }
 
-.btn-calc {
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  padding: 12px 28px;
-  border-radius: 4px;
-  font-size: 18px;
-  cursor: pointer;
-}
+
 
 /* Адаптивность */
 @media (max-width: 900px) {

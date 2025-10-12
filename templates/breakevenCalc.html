@@ -31,9 +31,8 @@
     <input
       class="input product-cost"
       placeholder="Введите стоимость единицы продукции"
-      value="{{ .CalcRequest.AmountProduct }}"
+      value="{{ if .CalcRequest.AmountProduct }}{{ .CalcRequest.AmountProduct}}{{ else }}{{ "" }}{{ end }}" 
     />
-    <button class="btn-calc">Рассчитать</button>
   </div>
 <div class="answer-wrap">
   <div class="result-card">
@@ -83,7 +82,7 @@
               <input
                 class="input"
                 placeholder="Введите величину"
-                value="{{ .AmountService }}"
+                value="{{ if .AmountService }}{{ .AmountService }}{{ else }}{{ "" }}{{ end }}" 
               />
             </div>
           </section>

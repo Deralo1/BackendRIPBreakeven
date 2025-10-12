@@ -59,13 +59,12 @@
     </main>
 
     <!-- Калькулятор: ведёт на страницу breakevencalc -->
-<a class="calculator" href="/breakevencalc/{{ .CalcRequest.BreakevenRequestID }}">
+<a class="calculator {{ if eq .calc_count 0 }}disabled{{ end }}"
+   {{ if gt .calc_count 0 }}href="/breakevencalc/{{ .CalcRequest.BreakevenRequestID }}"{{ end }}>
     {{ if gt .calc_count 0 }}
-        <!-- Если в корзине есть элементы -->
         <img src="http://localhost:9000/lab1/korzinafull.png" alt="calculator">
         <span class="calc-badge">{{ .calc_count }}</span>
     {{ else }}
-        <!-- Если корзина пустая -->
         <img src="http://localhost:9000/lab1/korzinaempty.png" alt="calculator-empty">
     {{ end }}
 </a>
