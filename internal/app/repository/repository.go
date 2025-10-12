@@ -9,32 +9,6 @@ type Repository struct {
 	db *gorm.DB
 }
 
-//func NewRepository() (*Repository, error) {
-//	return &Repository{}, nil
-//}
-
-/*
-type Service struct { // вот наша новая структура
-
-		ID               int    // поля структур, которые передаются в шаблон
-		Title            string // ОБЯЗАТЕЛЬНО должны быть написаны с заглавной буквы (то есть публичными)
-		ImageURL         string
-		Price            int
-		ShortDescription string
-		Description      string
-	}
-*/
-/*type BreakevenRequest struct {
-	AmountProduct   int
-	CalcAnswer      int
-	RequestServices []ServiceForRequest
-}
-type ServiceForRequest struct {
-	ServiceID     Service
-	AmountService int
-	TypeSpend     int
-}*/
-
 func New(dsn string) (*Repository, error) {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{}) // подключаемся к БД
 	if err != nil {
@@ -112,46 +86,3 @@ func New(dsn string) (*Repository, error) {
 		return services, nil
 	}
 */
-/*func (r *Repository) GetService(id int) (Service, error) {
-	// тут у вас будет логика получения нужной услуги, тоже наверное через цикл в первой лабе, и через запрос к БД начиная со второй
-	services, err := r.GetCostsService()
-	if err != nil {
-		return Service{}, err // тут у нас уже есть кастомная ошибка из нашего метода, поэтому мы можем просто вернуть ее
-	}
-
-	for _, service := range services {
-		if service.ID == id {
-			return service, nil // если нашли, то просто возвращаем найденный заказ (услугу) без ошибок
-		}
-	}
-	return Service{}, fmt.Errorf("заказ не найден") // тут нужна кастомная ошибка, чтобы понимать на каком этапе возникла ошибка и что произошло
-}*/
-/*func (r *Repository) GetServicesByTitle(title string) ([]Service, error) {
-	services, err := r.GetCostsService()
-	if err != nil {
-		return []Service{}, err
-	}
-
-	var result []Service
-	for _, service := range services {
-		if strings.Contains(strings.ToLower(service.Title), strings.ToLower(title)) {
-			result = append(result, service)
-		}
-	}
-
-	return result, nil
-}*/
-/*func (r *Repository) GetCalcServices() *BreakevenRequest {
-	card1, _ := r.GetExpenseByID(1)
-	card2, _ := r.GetExpenseByID(2)
-
-	CurrentCalc := &BreakevenRequest{
-		AmountProduct: 120,
-		CalcAnswer:    2233,
-		RequestServices: []ServiceForRequest{
-			{ServiceID: card1, AmountService: 1, TypeSpend: 1},  // В дальнейшем будет 1 постоянные 2 - переменные
-			{ServiceID: card2, AmountService: 10, TypeSpend: 1}, // В дальнейшем будет 1 постоянные 2 - переменные
-		},
-	}
-	return CurrentCalc
-}*/
