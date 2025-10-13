@@ -2,7 +2,6 @@ package repository
 
 import (
 	"Backeven/internal/app/ds"
-	"fmt"
 	"time"
 )
 
@@ -60,32 +59,6 @@ func (r *Repository) GetExpensesInCalcCount(UserId int) int {
 		return 0
 	}
 	return int(count)
-}
-func (r *Repository) AddExpenseToCalc(UserID, expenseID int) error {
-	// Получаем текущую заявку или создаем новую, если ее нет
-	calc, err := r.GetBreakevenCalc(UserID)
-	if err != nil {
-		return err
-	}
-	//Проверяем нет ли в корзине
-	var count int64
-	err = r.db.Model(&ds.ExpenseForRequest{}).
-		Where(`"BreakevenRequestID" = ? AND "ExpenseID" = ?`, calc.BreakevenRequestID, expenseID).Count(&count).Error
-	if err != nil {
-		return err
-	}
-	// если уже добавлен возвращаем ошибку
-	if count > 0 {
-		return fmt.Errorf("трата уже добавлена в корзину")
-	}
-	// Добавляем в корзину
-	item := ds.ExpenseForRequest{
-		BreakevenRequestID: calc.BreakevenRequestID,
-		ExpenseID:          expenseID,
-		AmountService:      0,
-		TypeSpend:          1,
-	}
-	return r.db.Create(&item).Error
 }
 func (r *Repository) DeleteBreakEvenCalc(CalcID uint) error {
 	return r.db.Exec(`Update Breakeven_Requests SET "BreakEvenStatus"= 'удалён' WHERE "BreakevenRequestID" = ?`, CalcID).Error

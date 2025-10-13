@@ -22,19 +22,8 @@ func NewHandler(r *repository.Repository, minioClient *minio.Client, bucketName 
 	}
 }
 
-// RegisterHandler Функция в которой мы отдельно регистрируем маршруты,чтобы не писать все в одном месте
-func (h *Handler) RegisterHandler(router *gin.Engine) {
-	router.GET("/Nalogimain", h.GetAllExpense)
-	router.GET("/CostService/:ExpenseID", h.GetExpenseByID)
-	router.GET("/breakevencalc/:BreakevenRequestID", h.GetBreakeven)
-	// POST
-	router.POST("/breakevencalc/add-expense", h.AddExpenseToCalc)
-	router.POST("/breakevencalc/delete-calc", h.DeleteBreakEvenCalc)
-}
-
 // Получаем статику
 func (h *Handler) RegisterStatic(router *gin.Engine) {
-	router.LoadHTMLGlob("templates/*")
 	router.Static("/static", "./resources")
 }
 
@@ -45,4 +34,28 @@ func (h *Handler) errorhandler(ctx *gin.Context, errorStatusCode int, err error)
 		"status":      "error",
 		"description": err.Error(),
 	})
+}
+
+func (h *Handler) successResponse(ctx *gin.Context, data interface{}) {
+	ctx.JSON(200, gin.H{
+		"data": data,
+	})
+}
+func (h *Handler) GetCurrentUserId() int {
+	return 1
+}
+
+// RegisterHandler Функция в которой мы отдельно регистрируем маршруты,чтобы не писать все в одном месте
+func (h *Handler) RegisterHandler(router *gin.Engine) {
+	api := router.Group("api/v1")
+	{
+		// Траты
+		api.GET("/expenses", h.GetAllExpense)
+		api.GET("/expenses/:id", h.GetExpenseByID)
+		api.POST("/expenses", h.CreateExpense)
+		api.PUT("/expenses/:id", h.UpdateExpense)
+		api.DELETE("/expenses/:id", h.DeleteExpense)
+		api.POST("/expenses/:id/image", h.UploadExpenseImage)
+		api.POST("/expenses/add-to-calc/:id", h.AddExpenseToCalc)
+	}
 }

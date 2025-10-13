@@ -29,27 +29,6 @@ func (h *Handler) GetBreakeven(ctx *gin.Context) {
 		"CalcRequest": calc,
 	})
 }
-func (h *Handler) AddExpenseToCalc(ctx *gin.Context) {
-	userID := 1 // хардкод ид пользователя
-	//Получаем ID из формы
-	expenseIDstr := ctx.PostForm("ExpenseID")
-	expenseID, err := strconv.Atoi(expenseIDstr)
-	if err != nil {
-		h.errorhandler(ctx, http.StatusBadRequest, err)
-		return
-	}
-	// Добавляем в калькулятор
-	err = h.Repository.AddExpenseToCalc(userID, expenseID)
-	if err != nil {
-		if err.Error() == "услуга уже добавлена в калькулятор" {
-			ctx.Redirect(http.StatusFound, "/Nalogimain") // здесь под вопросов куда редиректить
-		} else {
-			h.errorhandler(ctx, http.StatusInternalServerError, err)
-		}
-		return
-	}
-	ctx.Redirect(http.StatusFound, "/Nalogimain")
-}
 func (h *Handler) DeleteBreakEvenCalc(ctx *gin.Context) {
 	breakevenIDstr := ctx.PostForm("BreakevenRequestID")
 	CalcID, err := strconv.Atoi(breakevenIDstr)
