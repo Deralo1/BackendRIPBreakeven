@@ -14,7 +14,7 @@ func (h *Handler) GetBreakeven(ctx *gin.Context) {
 		h.errorhandler(ctx, http.StatusBadRequest, err)
 		return
 	}
-	calc, err := h.Repository.GetBreakevenCalcByID(uint(id))
+	calc, err := h.Repository.GetBreakevenCalcByID(int(id))
 	if err != nil {
 		// если заявка не найдена или удалена
 		ctx.Redirect(http.StatusFound, "/Nalogimain")

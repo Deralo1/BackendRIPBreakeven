@@ -30,7 +30,7 @@ func (r *Repository) GetAllExpense() ([]ds.ExpenseDTO, error) {
 
 func (r *Repository) GetExpenseByTitle(Title string) ([]ds.ExpenseDTO, error) {
 	var expenses []ds.Expense
-	err := r.db.Where(`"Title" ILIKE ? AND "IsDeleted" = false`, "%"+Title+"%").Find(&expenses).Error
+	err := r.db.Where(`"ExpenseTitle" ILIKE ? AND "IsDeleted" = false`, "%"+Title+"%").Find(&expenses).Error
 	if err != nil {
 		return nil, err
 	}
