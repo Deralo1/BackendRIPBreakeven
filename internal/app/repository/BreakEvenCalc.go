@@ -2,6 +2,7 @@ package repository
 
 import (
 	"Backeven/internal/app/ds"
+	"Backeven/internal/service"
 	"database/sql"
 	"fmt"
 	"time"
@@ -189,4 +190,79 @@ func (r *Repository) GetExpensesInCalcCount(UserId int) int {
 		return 0
 	}
 	return int(count)
+}
+
+func (r *Repository) ProccessBreakEvenRequest(id uint, moderatorID int, action string) (*ds.BreakevenRequestDTO, error) {
+	var CalcBreakEven ds.BreakevenRequest
+	err := r.db.Where(`"BreakevenRequestID" = ?`, id).
+		Preload("Moderator").
+		Preload("Creator").
+		Preload("RequestExpense").
+		Preload("RequestExpense.Expense").
+		First(&CalcBreakEven).
+		Error
+	if err != nil {
+		return nil, err
+	}
+
+	if CalcBreakEven.BreakevenRequestStatus != "сформирован" {
+		return nil, fmt.Errorf("заявка не может быть обработана, так как ожидается статус сформирован. Ee текущий статус: %s", CalcBreakEven.BreakevenRequestStatus)
+	}
+	CalcBreakEven.ModeratorID = sql.NullInt64{Int64: int64(moderatorID), Valid: true}
+
+	switch action {
+	case "complete":
+		// Считаем ТБУ
+		breakeven, err := service.CalculateAnswer(&CalcBreakEven)
+		if err != nil {
+			return nil, err
+		}
+		CalcBreakEven.CalcAnswer = breakeven
+		CalcBreakEven.BreakevenRequestStatus = "завершён"
+		CalcBreakEven.CompletedAt = sql.NullTime{Time: time.Now(), Valid: true}
+	case "reject":
+		CalcBreakEven.BreakevenRequestStatus = "отклонён"
+	default:
+		return nil, fmt.Errorf("действие %s недопустимо, допустимые действия 'complete' и 'reject'", action)
+	}
+	err = r.db.Save(&CalcBreakEven).Error
+	if err != nil {
+		return nil, err
+	}
+	var moderatorLogin string
+	if CalcBreakEven.ModeratorID.Valid {
+		// Прямой запрос логина пользователя по id
+		err = r.db.Table("users").Where(`"UserID" = ?`, CalcBreakEven.ModeratorID.Int64).Select(`"Login"`).Scan(&moderatorLogin).Error
+		if err != nil {
+			moderatorLogin = ""
+		}
+	}
+	dto := ds.BreakevenRequestDTO{
+		BreakevenRequestID:     CalcBreakEven.BreakevenRequestID,
+		BreakevenRequestStatus: CalcBreakEven.BreakevenRequestStatus,
+		CreationDate:           CalcBreakEven.CreationDate,
+		CreatorLogin:           CalcBreakEven.Creator.Login,
+		AmountProduct:          CalcBreakEven.AmountProduct,
+		CalcAnswer:             CalcBreakEven.CalcAnswer,
+	}
+	if CalcBreakEven.FormatedAt.Valid {
+		dto.FormatedAt = &CalcBreakEven.FormatedAt.Time
+	}
+	if CalcBreakEven.CompletedAt.Valid {
+		dto.CompletedAt = &CalcBreakEven.CompletedAt.Time
+	}
+	// Присваиваем логин
+	if moderatorLogin == "" {
+		dto.ModeratorLogin = &moderatorLogin
+	}
+	for _, ce := range CalcBreakEven.RequestExpense {
+		dto.RequestExpense = append(dto.RequestExpense, ds.ExpenseForRequestDTO{
+			ExpenseID:     ce.ExpenseID,
+			Title:         ce.Expense.Title,
+			ImageURL:      ce.Expense.ImageURL,
+			AmountService: ce.AmountService,
+			TypeSpend:     ce.TypeSpend,
+		})
+	}
+	return &dto, nil
 }
