@@ -47,3 +47,7 @@ type UpdateBreakEvenCalcDTO struct {
 	AmountProduct int `json:"AmountProduct"`
 	CalcAnswer    int `json:"CalcAnswer"`
 }
+type ChangeUserDTO struct {
+	Login    string `json:"login"`
+	Password string `json:"password"`
+}

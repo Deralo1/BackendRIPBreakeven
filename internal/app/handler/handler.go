@@ -64,7 +64,7 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 		//для заявки(калькулятора точки безубыточности)
 		api.GET("/breakeven/calc", h.GetBreakevenCalcInfo)
 		api.GET("/breakeven", h.GetBreakEvenList)
-		api.GET("/breakeven/:id", h.GetExpenseByID)
+		api.GET("/breakeven/:id", h.GetBreakeven)
 		api.PUT("/breakeven/:id", h.PutBreakEven)
 		api.PUT("/breakeven/:id/form", h.FormBreakEvenCalc)
 		api.PUT("/breakeven/:id/process", h.ProccessBreakEven)

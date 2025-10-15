@@ -59,7 +59,7 @@ func (h *Handler) GetBreakEvenList(ctx *gin.Context) { // Get списка кр�
 }
 
 func (h *Handler) GetBreakeven(ctx *gin.Context) { // GET одна запись заявки
-	idStr := ctx.Param("BreakevenRequestID")
+	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		h.errorhandler(ctx, http.StatusBadRequest, err)
@@ -114,7 +114,7 @@ func (h *Handler) FormBreakEvenCalc(ctx *gin.Context) { // PUT сформиро�
 	ctx.JSON(http.StatusOK, gin.H{})
 }
 func (h *Handler) DeleteBreakEvenCalc(ctx *gin.Context) { // DELETE заявки
-	breakevenIDstr := ctx.Param("BreakevenRequestID")
+	breakevenIDstr := ctx.Param("id")
 	CalcID, err := strconv.Atoi(breakevenIDstr)
 	if err != nil {
 		h.errorhandler(ctx, http.StatusBadRequest, err)
