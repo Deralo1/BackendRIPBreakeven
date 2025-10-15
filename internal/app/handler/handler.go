@@ -72,9 +72,13 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 
 		// пользователи
 		api.POST("/user/register", h.RegisterUser)
-		api.GET("/user/profle", h.GetProfile)
+		api.GET("/user/profile", h.GetProfile)
 		api.PUT("/user/profile", h.UpdateUserProf)
 		api.POST("/user/login", h.LoginUser)
 		api.POST("/user/logout", h.LogoutUser)
+
+		// м-м
+		api.PUT("/expense-calc/:id", h.UpdateExpenseInReq)
+		api.DELETE("/expense-calc/:id", h.DeleteFromCalc)
 	}
 }

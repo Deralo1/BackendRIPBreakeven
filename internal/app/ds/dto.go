@@ -37,6 +37,10 @@ type ExpenseForRequestDTO struct {
 	AmountService int    `json:"AmountService"`
 	TypeSpend     int    `json:"TypeSpend"`
 }
+type UpdateRequestExpenseDTO struct {
+	AmountService int `json:"AmountService"`
+	TypeSpend     int `json:"TypeSpend"`
+}
 type UpdateexpenseDTO struct { // post без изображения
 	Title            string `json:"Title"`
 	Price            int    `json:"Price"`
