@@ -44,6 +44,9 @@ func (h *Handler) successResponse(ctx *gin.Context, data interface{}) {
 func (h *Handler) GetCurrentUserId() int {
 	return 1
 }
+func (h *Handler) GetCurrentModeratorId() int {
+	return 2
+}
 
 // RegisterHandler Функция в которой мы отдельно регистрируем маршруты,чтобы не писать все в одном месте
 func (h *Handler) RegisterHandler(router *gin.Engine) {
@@ -57,5 +60,14 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 		api.DELETE("/expenses/:id", h.DeleteExpense)
 		api.POST("/expenses/:id/image", h.UploadExpenseImage)
 		api.POST("/expenses/add-to-calc/:id", h.AddExpenseToCalc)
+
+		//для заявки(калькулятора точки безубыточности)
+		api.GET("/breakeven/calc", h.GetBreakevenCalcInfo)
+		api.GET("/breakeven", h.GetBreakEvenList)
+		api.GET("/breakeven/:id", h.GetExpenseByID)
+		api.PUT("/breakeven/:id", h.PutBreakEven)
+		api.PUT("/breakeven/:id/form", h.FormBreakEvenCalc)
+		api.PUT("/breakeven/:id/process", h.ProccessBreakEven)
+		api.DELETE("breakeven/:id", h.DeleteBreakEvenCalc)
 	}
 }
