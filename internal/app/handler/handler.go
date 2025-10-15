@@ -69,5 +69,12 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 		api.PUT("/breakeven/:id/form", h.FormBreakEvenCalc)
 		api.PUT("/breakeven/:id/process", h.ProccessBreakEven)
 		api.DELETE("breakeven/:id", h.DeleteBreakEvenCalc)
+
+		// пользователи
+		api.POST("/user/register", h.RegisterUser)
+		api.GET("/user/profle", h.GetProfile)
+		api.PUT("/user/profile", h.UpdateUserProf)
+		api.POST("/user/login", h.LoginUser)
+		api.POST("/user/logout", h.LogoutUser)
 	}
 }
