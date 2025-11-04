@@ -1,0 +1,792 @@
+basePath: /api/v1
+definitions:
+  ds.AuthResponseDTO:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        description: Unix timestamp истечения
+        type: integer
+      token_type:
+        type: string
+    type: object
+  ds.BreakevenRequestDTO:
+    properties:
+      AmountProduct:
+        type: integer
+      BreakevenRequestID:
+        type: integer
+      BreakevenRequestStatus:
+        type: string
+      CalcAnswer:
+        type: integer
+      CompletedAt:
+        type: string
+      CreationDate:
+        type: string
+      CreatorLogin:
+        type: string
+      FormatedAt:
+        type: string
+      ModeratorLogin:
+        type: string
+      RequestExpense:
+        items:
+          $ref: '#/definitions/ds.ExpenseForRequestDTO'
+        type: array
+    type: object
+  ds.ChangeUserDTO:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+  ds.ExpenseDTO:
+    properties:
+      Description:
+        type: string
+      ExpenseID:
+        type: integer
+      ImageURL:
+        type: string
+      Price:
+        type: integer
+      ShortDescription:
+        type: string
+      Title:
+        type: string
+    type: object
+  ds.ExpenseForRequestDTO:
+    properties:
+      AmountService:
+        type: integer
+      ExpenseID:
+        type: integer
+      ImageURL:
+        type: string
+      Title:
+        type: string
+      TypeSpend:
+        type: integer
+    type: object
+  ds.UpdateRequestExpenseDTO:
+    properties:
+      AmountService:
+        type: integer
+      TypeSpend:
+        type: integer
+    type: object
+  ds.UpdateexpenseDTO:
+    properties:
+      Description:
+        type: string
+      Price:
+        type: integer
+      ShortDescription:
+        type: string
+      Title:
+        type: string
+    type: object
+  ds.UserDTO:
+    properties:
+      Login:
+        type: string
+      Role:
+        $ref: '#/definitions/ds.UserRole'
+      UserId:
+        type: integer
+    type: object
+  ds.UserRole:
+    enum:
+    - guest
+    - creator
+    - moderator
+    type: string
+    x-enum-comments:
+      RoleCreator: обычный пользователь
+    x-enum-descriptions:
+    - ""
+    - обычный пользователь
+    - ""
+    x-enum-varnames:
+    - RoleGuest
+    - RoleCreator
+    - RoleModerator
+  handler.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+host: localhost:8082
+info:
+  contact: {}
+  description: Используется для запросов из браузера.
+  title: Расчет точки безубыточности
+  version: "1.0"
+paths:
+  /breakeven:
+    get:
+      description: Для модератора - все заявки. Для создателя - только его заявки.
+      parameters:
+      - description: Фильтр по статусу ('черновик', 'сформирован', 'завершён', 'отклонён')
+        in: query
+        name: status
+        type: string
+      responses:
+        "200":
+          description: Список заявок
+          schema:
+            items:
+              items:
+                $ref: '#/definitions/ds.BreakevenRequestDTO'
+              type: array
+            type: array
+        "401":
+          description: Неавторизован
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      - SessionCookie: []
+      summary: Получить список заявок
+      tags:
+      - Домен заявки на подсчет точки
+  /breakeven/{id}:
+    delete:
+      description: Удаляет заявку (только черновик).
+      parameters:
+      - description: ID заявки (черновика)
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Успешное удаление
+        "400":
+          description: Неверный формат ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Неавторизован
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Ошибка сервера/Не является черновиком
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      - SessionCookie: []
+      summary: Удалить черновик заявки
+      tags:
+      - Домен заявки на подсчет точки
+    get:
+      parameters:
+      - description: ID заявки
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: Заявка
+          schema:
+            items:
+              $ref: '#/definitions/ds.BreakevenRequestDTO'
+            type: array
+        "401":
+          description: Неавторизован
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      - SessionCookie: []
+      summary: Получить одну заявку по id
+      tags:
+      - Домен заявки на подсчет точки
+    put:
+      consumes:
+      - application/json
+      description: Обновляет поле 'TextToAnalyse' черновой заявки.
+      parameters:
+      - description: ID заявки (черновика)
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Новые данные для подсчета
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ds.UpdateRequestExpenseDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное обновление
+          schema:
+            $ref: '#/definitions/ds.BreakevenRequestDTO'
+        "400":
+          description: Неверный формат ID или данных
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Неавторизован
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Ошибка сервера/Не является черновиком
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      - SessionCookie: []
+      summary: Обновить черновик
+      tags:
+      - Домен заявки на подсчет точки
+  /breakeven/{id}/form:
+    put:
+      description: Переводит статус черновика на 'на модерации'.
+      parameters:
+      - description: ID заявки (черновика)
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешная отправка
+          schema:
+            $ref: '#/definitions/ds.BreakevenRequestDTO'
+        "400":
+          description: Неверный формат ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Неавторизован
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Ошибка сервера/Не является черновиком
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      - SessionCookie: []
+      summary: Отправить заявку на модерацию
+      tags:
+      - Домен заявки на подсчет точки
+  /breakeven/{id}/process:
+    put:
+      parameters:
+      - description: ID заявки
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Действие ('complete' или 'reject')
+        in: query
+        name: action
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Обновленная заявка
+          schema:
+            $ref: '#/definitions/ds.BreakevenRequestDTO'
+        "401":
+          description: Неавторизован
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Доступ запрещен (не модератор)
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Заявка не найдена
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      - SessionCookie: []
+      summary: Завершить или отклонить заявку (Только для Модератора)
+      tags:
+      - Домен заявки на подсчет точки
+  /breakeven/calc:
+    get:
+      description: Возвращает ID текущей черновой заявки и количество трат в ней.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о черновике
+          schema:
+            properties:
+              BreakevenRequestID:
+                type: integer
+              expense_in_BreakEvenCount:
+                type: integer
+            type: object
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      - SessionCookie: []
+      summary: Получить информацию о черновике
+      tags:
+      - Домен заявки на подсчет точки
+  /expense-calc/{id}:
+    delete:
+      description: Удаляет трату из текущего черновика заявки.
+      parameters:
+      - description: ID траты для удаления
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Успешное удаление
+        "400":
+          description: Неверный формат ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Неавторизован
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Удалить трату из заявки
+      tags:
+      - Домен м-м
+    put:
+      consumes:
+      - application/json
+      description: Обновляет количество и тип для выбранной траты в текущем черновике
+        заявки.
+      parameters:
+      - description: ID траты
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Количество и тип
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ds.UpdateRequestExpenseDTO'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Успешное обновление
+        "400":
+          description: Неверный формат ID или данных
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Неавторизован
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      - SessionCookie: []
+      summary: Обновить трату в заявке
+      tags:
+      - Домен м-м
+  /expenses:
+    get:
+      description: Возвращает список всех существующих трат. Доступен публично.
+      parameters:
+      - description: Поиск по названию траты (частичное совпадение)
+        in: query
+        name: searchbyexpensename
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список трат
+          schema:
+            $ref: '#/definitions/ds.ExpenseDTO'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Получить список трат
+      tags:
+      - Домен трат
+    post:
+      consumes:
+      - application/json
+      description: Создает новую трату. Требуются права **Модератора**.
+      parameters:
+      - description: Цена и описание траты
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ds.UpdateexpenseDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Успешное создание траты
+          schema:
+            $ref: '#/definitions/ds.ExpenseDTO'
+        "400":
+          description: Неверный формат данных
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Доступ запрещен (не модератор)
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      - SessionCookie: []
+      summary: Создать новую трату
+      tags:
+      - Домен трат
+  /expenses/{id}:
+    delete:
+      description: Устанавливает флаг is_deleted = true для траты. Требуются права
+        **Модератора**.
+      parameters:
+      - description: ID траты
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Успешное удаление
+        "400":
+          description: Неверный формат ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Доступ запрещен (не модератор)
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      - SessionCookie: []
+      summary: Удалить Трату
+      tags:
+      - Домен трат
+    get:
+      description: Возвращает информацию о конкретном трате. Доступен публично.
+      parameters:
+      - description: ID траты
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о трате
+          schema:
+            $ref: '#/definitions/ds.ExpenseDTO'
+        "400":
+          description: Неверный формат ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Трата не найден
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Получить трату по ID
+      tags:
+      - Домен трат
+    put:
+      consumes:
+      - application/json
+      description: Обновляет цену и описание траты по ID. Требуются права **Модератора**.
+      parameters:
+      - description: ID траты
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Новая цены и описание траты
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ds.UpdateexpenseDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное обновление
+          schema:
+            $ref: '#/definitions/ds.ExpenseDTO'
+        "400":
+          description: Неверный формат ID или данных
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Доступ запрещен (не модератор)
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Трата не найден
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      - SessionCookie: []
+      summary: Обновить трату
+      tags:
+      - Домен трат
+  /expenses/{id}/image:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Загружает и обновляет изображение для траты по ID. Требуются права
+        **Модератора**.
+      parameters:
+      - description: ID траты
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Файл изображения
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешная загрузка, возвращает обновленный трату
+          schema:
+            $ref: '#/definitions/ds.ExpenseDTO'
+        "400":
+          description: Ошибка загрузки/формата файла
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "403":
+          description: Доступ запрещен (не модератор)
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Ошибка Minio/сервера
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      - SessionCookie: []
+      summary: Загрузить изображение траты
+      tags:
+      - Домен трат
+  /expenses/add-to-calc/{id}:
+    post:
+      description: Добавляет трату в текущую черновую заявку пользователя. Требуется
+        **Авторизация**.
+      parameters:
+      - description: ID траты для добавления
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Успешное добавление
+        "400":
+          description: Неверный формат ID
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Неавторизован
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Ошибка сервера (например, трата уже добавлен)
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      - SessionCookie: []
+      summary: Добавить трату в черновик заявки
+      tags:
+      - Домен трат
+  /user/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Данные для входа
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/ds.ChangeUserDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешный вход
+          schema:
+            $ref: '#/definitions/ds.AuthResponseDTO'
+        "400":
+          description: Неверный запрос
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Неавторизован
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Аутентификация пользователя
+      tags:
+      - Домен пользователя
+  /user/logout:
+    post:
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Успешный выход
+        "401":
+          description: Неавторизован (отсутствует токен)
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Ошибка Redis/сервера
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      - SessionCookie: []
+      summary: Выход из системы
+      tags:
+      - Домен пользователя
+  /user/profile:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Данные пользователя
+          schema:
+            $ref: '#/definitions/ds.UserDTO'
+        "401":
+          description: Неавторизован
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Пользователь не найден (редкий случай)
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      - SessionCookie: []
+      summary: Получить профиль
+      tags:
+      - Домен пользователя
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Новые данные (логин/пароль)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ds.ChangeUserDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное обновление
+          schema:
+            $ref: '#/definitions/ds.UserDTO'
+        "400":
+          description: Неверный формат данных
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "401":
+          description: Неавторизован
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Ошибка сервера
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      - SessionCookie: []
+      summary: Обновить профиль
+      tags:
+      - Домен пользователя
+  /user/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Данные для регистрации (логин и пароль)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ds.ChangeUserDTO'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Успешная регистрация
+        "400":
+          description: Неверный формат данных
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Ошибка сервера или пользователь с таким логином уже существует
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Регистрация нового пользователя
+      tags:
+      - Домен пользователя
+schemes:
+- http
+securityDefinitions:
+  ApiKeyAuth:
+    description: 'Используется для запросов через Insomnia/Postman: "Bearer <JWT>"'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

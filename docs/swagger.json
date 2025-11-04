@@ -1,0 +1,1251 @@
+{
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "Используется для запросов из браузера.",
+        "title": "Расчет точки безубыточности",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8082",
+    "basePath": "/api/v1",
+    "paths": {
+        "/breakeven": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "Для модератора - все заявки. Для создателя - только его заявки.",
+                "tags": [
+                    "Домен заявки на подсчет точки"
+                ],
+                "summary": "Получить список заявок",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Фильтр по статусу ('черновик', 'сформирован', 'завершён', 'отклонён')",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список заявок",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/ds.BreakevenRequestDTO"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизован",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/breakeven/calc": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "Возвращает ID текущей черновой заявки и количество трат в ней.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Домен заявки на подсчет точки"
+                ],
+                "summary": "Получить информацию о черновике",
+                "responses": {
+                    "200": {
+                        "description": "Информация о черновике",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "BreakevenRequestID": {
+                                    "type": "integer"
+                                },
+                                "expense_in_BreakEvenCount": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/breakeven/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "tags": [
+                    "Домен заявки на подсчет точки"
+                ],
+                "summary": "Получить одну заявку по id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID заявки",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Заявка",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ds.BreakevenRequestDTO"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизован",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "Обновляет поле 'TextToAnalyse' черновой заявки.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Домен заявки на подсчет точки"
+                ],
+                "summary": "Обновить черновик",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID заявки (черновика)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Новые данные для подсчета",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ds.UpdateRequestExpenseDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешное обновление",
+                        "schema": {
+                            "$ref": "#/definitions/ds.BreakevenRequestDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат ID или данных",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизован",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера/Не является черновиком",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "Удаляет заявку (только черновик).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Домен заявки на подсчет точки"
+                ],
+                "summary": "Удалить черновик заявки",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID заявки (черновика)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Успешное удаление"
+                    },
+                    "400": {
+                        "description": "Неверный формат ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизован",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера/Не является черновиком",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/breakeven/{id}/form": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "Переводит статус черновика на 'на модерации'.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Домен заявки на подсчет точки"
+                ],
+                "summary": "Отправить заявку на модерацию",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID заявки (черновика)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешная отправка",
+                        "schema": {
+                            "$ref": "#/definitions/ds.BreakevenRequestDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизован",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера/Не является черновиком",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/breakeven/{id}/process": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "tags": [
+                    "Домен заявки на подсчет точки"
+                ],
+                "summary": "Завершить или отклонить заявку (Только для Модератора)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID заявки",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Действие ('complete' или 'reject')",
+                        "name": "action",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Обновленная заявка",
+                        "schema": {
+                            "$ref": "#/definitions/ds.BreakevenRequestDTO"
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизован",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Доступ запрещен (не модератор)",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Заявка не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/expense-calc/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "Обновляет количество и тип для выбранной траты в текущем черновике заявки.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Домен м-м"
+                ],
+                "summary": "Обновить трату в заявке",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID траты",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Количество и тип",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ds.UpdateRequestExpenseDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Успешное обновление"
+                    },
+                    "400": {
+                        "description": "Неверный формат ID или данных",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизован",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Удаляет трату из текущего черновика заявки.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Домен м-м"
+                ],
+                "summary": "Удалить трату из заявки",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID траты для удаления",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Успешное удаление"
+                    },
+                    "400": {
+                        "description": "Неверный формат ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизован",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/expenses": {
+            "get": {
+                "description": "Возвращает список всех существующих трат. Доступен публично.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Домен трат"
+                ],
+                "summary": "Получить список трат",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Поиск по названию траты (частичное совпадение)",
+                        "name": "searchbyexpensename",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список трат",
+                        "schema": {
+                            "$ref": "#/definitions/ds.ExpenseDTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "Создает новую трату. Требуются права **Модератора**.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Домен трат"
+                ],
+                "summary": "Создать новую трату",
+                "parameters": [
+                    {
+                        "description": "Цена и описание траты",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ds.UpdateexpenseDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Успешное создание траты",
+                        "schema": {
+                            "$ref": "#/definitions/ds.ExpenseDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат данных",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Доступ запрещен (не модератор)",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/expenses/add-to-calc/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "Добавляет трату в текущую черновую заявку пользователя. Требуется **Авторизация**.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Домен трат"
+                ],
+                "summary": "Добавить трату в черновик заявки",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID траты для добавления",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Успешное добавление"
+                    },
+                    "400": {
+                        "description": "Неверный формат ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизован",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера (например, трата уже добавлен)",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/expenses/{id}": {
+            "get": {
+                "description": "Возвращает информацию о конкретном трате. Доступен публично.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Домен трат"
+                ],
+                "summary": "Получить трату по ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID траты",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Информация о трате",
+                        "schema": {
+                            "$ref": "#/definitions/ds.ExpenseDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Трата не найден",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "Обновляет цену и описание траты по ID. Требуются права **Модератора**.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Домен трат"
+                ],
+                "summary": "Обновить трату",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID траты",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Новая цены и описание траты",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ds.UpdateexpenseDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешное обновление",
+                        "schema": {
+                            "$ref": "#/definitions/ds.ExpenseDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат ID или данных",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Доступ запрещен (не модератор)",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Трата не найден",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "Устанавливает флаг is_deleted = true для траты. Требуются права **Модератора**.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Домен трат"
+                ],
+                "summary": "Удалить Трату",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID траты",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Успешное удаление"
+                    },
+                    "400": {
+                        "description": "Неверный формат ID",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Доступ запрещен (не модератор)",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/expenses/{id}/image": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "description": "Загружает и обновляет изображение для траты по ID. Требуются права **Модератора**.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Домен трат"
+                ],
+                "summary": "Загрузить изображение траты",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID траты",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Файл изображения",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешная загрузка, возвращает обновленный трату",
+                        "schema": {
+                            "$ref": "#/definitions/ds.ExpenseDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка загрузки/формата файла",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Доступ запрещен (не модератор)",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка Minio/сервера",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/login": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Домен пользователя"
+                ],
+                "summary": "Аутентификация пользователя",
+                "parameters": [
+                    {
+                        "description": "Данные для входа",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ds.ChangeUserDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный вход",
+                        "schema": {
+                            "$ref": "#/definitions/ds.AuthResponseDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный запрос",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизован",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/logout": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Домен пользователя"
+                ],
+                "summary": "Выход из системы",
+                "responses": {
+                    "204": {
+                        "description": "Успешный выход"
+                    },
+                    "401": {
+                        "description": "Неавторизован (отсутствует токен)",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка Redis/сервера",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/profile": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Домен пользователя"
+                ],
+                "summary": "Получить профиль",
+                "responses": {
+                    "200": {
+                        "description": "Данные пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/ds.UserDTO"
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизован",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден (редкий случай)",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "SessionCookie": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Домен пользователя"
+                ],
+                "summary": "Обновить профиль",
+                "parameters": [
+                    {
+                        "description": "Новые данные (логин/пароль)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ds.ChangeUserDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешное обновление",
+                        "schema": {
+                            "$ref": "#/definitions/ds.UserDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат данных",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизован",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/register": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Домен пользователя"
+                ],
+                "summary": "Регистрация нового пользователя",
+                "parameters": [
+                    {
+                        "description": "Данные для регистрации (логин и пароль)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ds.ChangeUserDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Успешная регистрация"
+                    },
+                    "400": {
+                        "description": "Неверный формат данных",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера или пользователь с таким логином уже существует",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "ds.AuthResponseDTO": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "expires_in": {
+                    "description": "Unix timestamp истечения",
+                    "type": "integer"
+                },
+                "token_type": {
+                    "type": "string"
+                }
+            }
+        },
+        "ds.BreakevenRequestDTO": {
+            "type": "object",
+            "properties": {
+                "AmountProduct": {
+                    "type": "integer"
+                },
+                "BreakevenRequestID": {
+                    "type": "integer"
+                },
+                "BreakevenRequestStatus": {
+                    "type": "string"
+                },
+                "CalcAnswer": {
+                    "type": "integer"
+                },
+                "CompletedAt": {
+                    "type": "string"
+                },
+                "CreationDate": {
+                    "type": "string"
+                },
+                "CreatorLogin": {
+                    "type": "string"
+                },
+                "FormatedAt": {
+                    "type": "string"
+                },
+                "ModeratorLogin": {
+                    "type": "string"
+                },
+                "RequestExpense": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ds.ExpenseForRequestDTO"
+                    }
+                }
+            }
+        },
+        "ds.ChangeUserDTO": {
+            "type": "object",
+            "properties": {
+                "login": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "ds.ExpenseDTO": {
+            "type": "object",
+            "properties": {
+                "Description": {
+                    "type": "string"
+                },
+                "ExpenseID": {
+                    "type": "integer"
+                },
+                "ImageURL": {
+                    "type": "string"
+                },
+                "Price": {
+                    "type": "integer"
+                },
+                "ShortDescription": {
+                    "type": "string"
+                },
+                "Title": {
+                    "type": "string"
+                }
+            }
+        },
+        "ds.ExpenseForRequestDTO": {
+            "type": "object",
+            "properties": {
+                "AmountService": {
+                    "type": "integer"
+                },
+                "ExpenseID": {
+                    "type": "integer"
+                },
+                "ImageURL": {
+                    "type": "string"
+                },
+                "Title": {
+                    "type": "string"
+                },
+                "TypeSpend": {
+                    "type": "integer"
+                }
+            }
+        },
+        "ds.UpdateRequestExpenseDTO": {
+            "type": "object",
+            "properties": {
+                "AmountService": {
+                    "type": "integer"
+                },
+                "TypeSpend": {
+                    "type": "integer"
+                }
+            }
+        },
+        "ds.UpdateexpenseDTO": {
+            "type": "object",
+            "properties": {
+                "Description": {
+                    "type": "string"
+                },
+                "Price": {
+                    "type": "integer"
+                },
+                "ShortDescription": {
+                    "type": "string"
+                },
+                "Title": {
+                    "type": "string"
+                }
+            }
+        },
+        "ds.UserDTO": {
+            "type": "object",
+            "properties": {
+                "Login": {
+                    "type": "string"
+                },
+                "Role": {
+                    "$ref": "#/definitions/ds.UserRole"
+                },
+                "UserId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "ds.UserRole": {
+            "type": "string",
+            "enum": [
+                "guest",
+                "creator",
+                "moderator"
+            ],
+            "x-enum-comments": {
+                "RoleCreator": "обычный пользователь"
+            },
+            "x-enum-descriptions": [
+                "",
+                "обычный пользователь",
+                ""
+            ],
+            "x-enum-varnames": [
+                "RoleGuest",
+                "RoleCreator",
+                "RoleModerator"
+            ]
+        },
+        "handler.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "description": "Используется для запросов через Insomnia/Postman: \"Bearer \u003cJWT\u003e\"",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}
