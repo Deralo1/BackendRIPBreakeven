@@ -2,12 +2,25 @@ package handler
 
 import (
 	"Backeven/internal/app/ds"
+	"Backeven/internal/middleware"
+	"Backeven/internal/service"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
+// @Summary Регистрация нового пользователя
+// @Tags Домен пользователя
+// @Accept json
+// @Produce json
+// @Param request body ds.ChangeUserDTO true "Данные для регистрации (логин и пароль)"
+// @Success 204 "Успешная регистрация"
+// @Failure 400 {object} handler.ErrorResponse  "Неверный формат данных"
+// @Failure 500 {object} handler.ErrorResponse  "Ошибка сервера или пользователь с таким логином уже существует"
+// @Router /user/register [post]
 func (h *Handler) RegisterUser(ctx *gin.Context) {
 	var input ds.ChangeUserDTO
 
@@ -26,9 +39,18 @@ func (h *Handler) RegisterUser(ctx *gin.Context) {
 		h.errorhandler(ctx, http.StatusInternalServerError, err)
 		return
 	}
-	h.successResponse(ctx, gin.H{})
+	ctx.Status(http.StatusNoContent)
 }
 
+// @Summary Аутентификация пользователя
+// @Tags Домен пользователя
+// @Accept  json
+// @Produce json
+// @Param user body ds.ChangeUserDTO true "Данные для входа"
+// @Success 200 {object} ds.AuthResponseDTO "Успешный вход"
+// @Failure 400 {object} handler.ErrorResponse "Неверный запрос"
+// @Failure 401 {object} handler.ErrorResponse "Неавторизован"
+// @Router /user/login [post]
 func (h *Handler) LoginUser(ctx *gin.Context) {
 	var input ds.ChangeUserDTO
 	if err := ctx.BindJSON(&input); err != nil {
@@ -37,20 +59,43 @@ func (h *Handler) LoginUser(ctx *gin.Context) {
 	}
 
 	if input.Login == "" || input.Password == "" {
-		h.errorhandler(ctx, http.StatusBadRequest, fmt.Errorf("введите логин и пароль"))
+		h.errorhandler(ctx, http.StatusBadRequest, fmt.Errorf("логин и пароль обязательны"))
 		return
 	}
 
-	userdto, err := h.Repository.LoginUser(input.Login, input.Password)
+	userDTO, err := h.Repository.LoginUser(input.Login, input.Password)
 	if err != nil {
 		h.errorhandler(ctx, http.StatusUnauthorized, err)
 		return
 	}
-	h.successResponse(ctx, userdto)
+
+	tokenString, expTime, err := service.GenerateJWT(userDTO.UserId, userDTO.Role, h.SecretKey, h.JWTDur)
+	if err != nil {
+		h.errorhandler(ctx, http.StatusInternalServerError, fmt.Errorf("ошибка генерации токена: %w", err))
+		return
+	}
+
+	ctx.SetCookie("session_token", tokenString, int(expTime.Unix()), "/", h.HostName, false, true)
+
+	h.successResponse(ctx, ds.AuthResponseDTO{
+		AccessToken: tokenString,
+		TokenType:   "Bearer",
+		ExpiresIn:   expTime.Unix(),
+	})
 }
 
+// GetProfile
+// @Summary Получить профиль
+// @Tags Домен пользователя
+// @Produce json
+// @Security ApiKeyAuth
+// @Security SessionCookie
+// @Success 200 {object} ds.UserDTO "Данные пользователя"
+// @Failure 401 {object} handler.ErrorResponse "Неавторизован"
+// @Failure 404 {object} handler.ErrorResponse  "Пользователь не найден (редкий случай)"
+// @Router /user/profile [get]
 func (h *Handler) GetProfile(ctx *gin.Context) {
-	userID := h.GetCurrentUserId()
+	userID := middleware.GetUserID(ctx)
 	userdto, err := h.Repository.GetUserByID(userID)
 	if err != nil {
 		h.errorhandler(ctx, http.StatusInternalServerError, err)
@@ -59,9 +104,22 @@ func (h *Handler) GetProfile(ctx *gin.Context) {
 	h.successResponse(ctx, userdto)
 }
 
+// UpdateUserProf
+// @Summary Обновить профиль
+// @Tags Домен пользователя
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Security SessionCookie
+// @Param request body ds.ChangeUserDTO true "Новые данные (логин/пароль)"
+// @Success 200 {object} ds.UserDTO "Успешное обновление"
+// @Failure 400 {object} handler.ErrorResponse "Неверный формат данных"
+// @Failure 401 {object} handler.ErrorResponse "Неавторизован"
+// @Failure 500 {object} handler.ErrorResponse "Ошибка сервера"
+// @Router /user/profile [put]
 func (h *Handler) UpdateUserProf(ctx *gin.Context) {
 
-	userID := h.GetCurrentUserId()
+	userID := middleware.GetUserID(ctx)
 	var userUpdate ds.ChangeUserDTO
 
 	if err := ctx.BindJSON(&userUpdate); err != nil {
@@ -78,16 +136,42 @@ func (h *Handler) UpdateUserProf(ctx *gin.Context) {
 	h.successResponse(ctx, updateduserDto)
 }
 
+// LogoutUser
+// @Summary Выход из системы
+// @Tags Домен пользователя
+// @Produce json
+// @Security ApiKeyAuth
+// @Security SessionCookie
+// @Success 204 "Успешный выход"
+// @Failure 401 {object} handler.ErrorResponse "Неавторизован (отсутствует токен)"
+// @Failure 500 {object} handler.ErrorResponse "Ошибка Redis/сервера"
+// @Router /user/logout [post]
 func (h *Handler) LogoutUser(ctx *gin.Context) {
-	userid := h.GetCurrentUserId()
-
-	err := h.Repository.LogoutUser(userid)
-	if err != nil {
-		h.errorhandler(ctx, http.StatusInternalServerError, err)
+	tokenString := service.ExtractToken(ctx)
+	if tokenString == "" {
+		h.errorhandler(ctx, http.StatusUnauthorized, fmt.Errorf("отсутствует токен для выхода"))
 		return
 	}
 
-	h.successResponse(ctx, gin.H{
-		"message": "Успешный выход из системы",
-	})
+	claims, err := service.ParseJWT(tokenString, h.SecretKey)
+	if err != nil {
+		ctx.Status(http.StatusNoContent)
+		return
+	}
+
+	remainingDur := time.Until(claims.ExpiresAt.Time)
+
+	if remainingDur > 0 {
+		err := h.Repository.AddToBlacklist(ctx, tokenString, remainingDur)
+		if err != nil {
+			h.errorhandler(ctx, http.StatusInternalServerError, fmt.Errorf("ошибка при добавлении в блеклист: %w", err))
+			return
+		}
+	} else {
+		logrus.Warnf("Попытка выхода с просроченным токеном. TTL: %v", remainingDur)
+	}
+
+	ctx.SetCookie("session_token", "", -1, "/", h.HostName, false, true)
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Выход выполнен успешно"})
 }

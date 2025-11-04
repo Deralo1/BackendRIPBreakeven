@@ -12,16 +12,21 @@ func (r *Repository) GetCalcInfo(userid int) (currentCalcID int, count int64, er
 	var BreakEvenCalc ds.BreakevenRequest
 	err = r.db.Where(`"Creator_ID" = ? AND "BreakEvenStatus" = 'черновик'`, userid).First(&BreakEvenCalc).Error
 	if err != nil {
-		if err.Error() != "record not found" {
+		// если черновика нет — возвращаем 0 без ошибки
+		if err.Error() == "record not found" {
 			return 0, 0, nil
 		}
+		// при реальной ошибке — возвращаем её
 		return 0, 0, err
 	}
-	err = r.db.Model(&ds.BreakevenRequest{}).Where(`"BreakevenRequestID" = ?`, BreakEvenCalc.BreakevenRequestID).Count(&count).Error
+
+	// считаем количество записей в корзине (ExpenseForRequest), а не количество заявок
+	err = r.db.Model(&ds.ExpenseForRequest{}).Where(`"BreakevenRequestID" = ?`, BreakEvenCalc.BreakevenRequestID).Count(&count).Error
 	if err != nil {
 		return 0, 0, err
 	}
-	return BreakEvenCalc.BreakevenRequestID, count, err
+	return BreakEvenCalc.BreakevenRequestID, count, nil
+
 }
 
 func (r *Repository) GetBreakevenCalc(userid int) (*ds.BreakevenRequest, error) {
@@ -53,22 +58,51 @@ func (r *Repository) GetBreakevenCalc(userid int) (*ds.BreakevenRequest, error) 
 	}
 	return &calc, err
 }
-func (r *Repository) GetListCalcByDateAndStatus(status string, startDate, enddate time.Time) ([]ds.BreakevenRequestDTO, error) {
+
+func (r *Repository) GetListCalcByDateAndStatus(
+	userID int,
+	role ds.UserRole,
+	status string,
+	startDate, endDate time.Time,
+) ([]ds.BreakevenRequestDTO, error) {
+
 	var calc []ds.BreakevenRequest
+
+	// Базовый запрос: исключаем удалённые и черновики
 	query := r.db.Where(`"BreakEvenStatus" != 'удалён' AND "BreakEvenStatus" != 'черновик'`)
+
+	// 🔹 Фильтрация по роли и userID
+	if role == ds.RoleCreator && userID != 0 {
+		query = query.Where(`"Creator_ID" = ?`, userID)
+	}
+	if role == ds.RoleModerator && userID != 0 {
+		query = query.Where(`"moderator_id" = ?`, userID)
+	}
+
+	// 🔹 Фильтрация по статусу
 	if status != "" {
 		query = query.Where(`"BreakEvenStatus" = ?`, status)
 	}
+
+	// 🔹 Фильтрация по датам
 	if !startDate.IsZero() {
 		query = query.Where(`"FormatedAt" >= ?`, startDate)
 	}
-	if !enddate.IsZero() {
-		query = query.Where(`"CompletedAt" <= ?`, enddate)
+	if !endDate.IsZero() {
+		query = query.Where(`"CompletedAt" <= ?`, endDate)
 	}
-	err := query.Preload("Creator").Preload("Moderator").Preload("RequestExpense.Expense").Find(&calc).Error
+
+	// Выполняем запрос с подгрузкой связей
+	err := query.
+		Preload("Creator").
+		Preload("Moderator").
+		Preload("RequestExpense.Expense").
+		Find(&calc).Error
 	if err != nil {
 		return nil, err
 	}
+
+	// Маппинг в DTO
 	dtos := make([]ds.BreakevenRequestDTO, len(calc))
 	for i, c := range calc {
 		dto := ds.BreakevenRequestDTO{
@@ -100,8 +134,10 @@ func (r *Repository) GetListCalcByDateAndStatus(status string, startDate, enddat
 		}
 		dtos[i] = dto
 	}
+
 	return dtos, nil
 }
+
 func (r *Repository) GetBreakevenCalcByID(CalcID int) (*ds.BreakevenRequestDTO, error) {
 	var calc ds.BreakevenRequest
 	err := r.db.Where(`"BreakevenRequestID" = ? AND "BreakEvenStatus" != 'удалён'`, CalcID).
@@ -194,6 +230,9 @@ func (r *Repository) GetExpensesInCalcCount(UserId int) int {
 
 func (r *Repository) ProccessBreakEvenRequest(id uint, moderatorID int, action string) (*ds.BreakevenRequestDTO, error) {
 	var CalcBreakEven ds.BreakevenRequest
+
+	CalcBreakEven.ModeratorID = sql.NullInt64{Int64: int64(moderatorID), Valid: true}
+
 	err := r.db.Where(`"BreakevenRequestID" = ?`, id).
 		Preload("Moderator").
 		Preload("Creator").

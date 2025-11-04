@@ -2,6 +2,8 @@ package ds
 
 import (
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type BreakevenRequestDTO struct { //заявка
@@ -27,9 +29,11 @@ type ExpenseDTO struct { // услуга
 }
 
 type UserDTO struct {
-	UserId int    `json:"UserId"`
-	Login  string `json:"Login"`
+	UserId int      `json:"UserId"`
+	Login  string   `json:"Login"`
+	Role   UserRole `json:"Role"`
 }
+
 type ExpenseForRequestDTO struct {
 	ExpenseID     int    `json:"ExpenseID"`
 	Title         string `json:"Title"`
@@ -37,10 +41,12 @@ type ExpenseForRequestDTO struct {
 	AmountService int    `json:"AmountService"`
 	TypeSpend     int    `json:"TypeSpend"`
 }
+
 type UpdateRequestExpenseDTO struct {
 	AmountService int `json:"AmountService"`
 	TypeSpend     int `json:"TypeSpend"`
 }
+
 type UpdateexpenseDTO struct { // post без изображения
 	Title            string `json:"Title"`
 	Price            int    `json:"Price"`
@@ -54,4 +60,24 @@ type UpdateBreakEvenCalcDTO struct {
 type ChangeUserDTO struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
+}
+
+type UserRole string
+
+const (
+	RoleGuest     UserRole = "guest"
+	RoleCreator   UserRole = "creator" // обычный пользователь
+	RoleModerator UserRole = "moderator"
+)
+
+// JWT claims определяет данные которые мы храним в токене
+type JWTClaims struct {
+	jwt.RegisteredClaims
+	UserID int      `json:"user_id"`
+	Role   UserRole `json:"role"`
+}
+type AuthResponseDTO struct {
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	ExpiresIn   int64  `json:"expires_in"` // Unix timestamp истечения
 }

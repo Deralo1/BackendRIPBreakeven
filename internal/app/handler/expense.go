@@ -2,6 +2,7 @@ package handler
 
 import (
 	"Backeven/internal/app/ds"
+	"Backeven/internal/middleware"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -10,6 +11,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// GetAllExpense
+// @Summary Получить список трат
+// @Description Возвращает список всех существующих трат. Доступен публично.
+// @Tags Домен трат
+// @Produce json
+// @Param searchbyexpensename query string false "Поиск по названию траты (частичное совпадение)"
+// @Success 200 {object} ds.ExpenseDTO "Список трат"
+// @Failure 500 {object} handler.ErrorResponse "Ошибка сервера"
+// @Router /expenses [get]
 func (h *Handler) GetAllExpense(ctx *gin.Context) {
 	var services []ds.ExpenseDTO
 	var err error
@@ -28,6 +38,16 @@ func (h *Handler) GetAllExpense(ctx *gin.Context) {
 	h.successResponse(ctx, services)
 }
 
+// GetExpenseByID
+// @Summary Получить трату по ID
+// @Description Возвращает информацию о конкретном трате. Доступен публично.
+// @Tags Домен трат
+// @Produce json
+// @Param id path int true "ID траты"
+// @Success 200 {object} ds.ExpenseDTO "Информация о трате"
+// @Failure 400 {object} handler.ErrorResponse "Неверный формат ID"
+// @Failure 404 {object} handler.ErrorResponse "Трата не найден"
+// @Router /expenses/{id} [get]
 func (h *Handler) GetExpenseByID(ctx *gin.Context) {
 	idStr := ctx.Param("id") // получаем id заказа из урла
 	// через двоеточие мы указываем параметры, которые потом сможем считать через функцию выше
@@ -39,12 +59,27 @@ func (h *Handler) GetExpenseByID(ctx *gin.Context) {
 
 	service, err := h.Repository.GetExpenseByID(id)
 	if err != nil {
-		h.errorhandler(ctx, http.StatusBadRequest, err)
+		h.errorhandler(ctx, http.StatusNotFound, err)
 		return
 	}
 
 	h.successResponse(ctx, service)
 }
+
+// CreateExpense
+// @Summary Создать новую трату
+// @Description Создает новую трату. Требуются права **Модератора**.
+// @Tags Домен трат
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Security SessionCookie
+// @Param request body ds.UpdateexpenseDTO true "Цена и описание траты"
+// @Success 201 {object} ds.ExpenseDTO "Успешное создание траты"
+// @Failure 400 {object} handler.ErrorResponse "Неверный формат данных"
+// @Failure 403 {object} handler.ErrorResponse "Доступ запрещен (не модератор)"
+// @Failure 500 {object} handler.ErrorResponse "Ошибка сервера"
+// @Router /expenses [post]
 func (h *Handler) CreateExpense(ctx *gin.Context) {
 	var expenseDTO ds.ExpenseDTO
 	if err := ctx.BindJSON(&expenseDTO); err != nil {
@@ -61,6 +96,21 @@ func (h *Handler) CreateExpense(ctx *gin.Context) {
 	})
 }
 
+// UpdateExpense
+// @Summary Обновить трату
+// @Description Обновляет цену и описание траты по ID. Требуются права **Модератора**.
+// @Tags Домен трат
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Security SessionCookie
+// @Param id path int true "ID траты"
+// @Param request body ds.UpdateexpenseDTO true "Новая цены и описание траты"
+// @Success 200 {object} ds.ExpenseDTO "Успешное обновление"
+// @Failure 400 {object} handler.ErrorResponse  "Неверный формат ID или данных"
+// @Failure 403 {object} handler.ErrorResponse  "Доступ запрещен (не модератор)"
+// @Failure 404 {object} handler.ErrorResponse  "Трата не найден"
+// @Router /expenses/{id} [put]
 func (h *Handler) UpdateExpense(ctx *gin.Context) {
 	idstr := ctx.Param("id")
 	id, err := strconv.Atoi(idstr)
@@ -81,6 +131,19 @@ func (h *Handler) UpdateExpense(ctx *gin.Context) {
 	h.successResponse(ctx, expenseUpdate)
 }
 
+// DeleteExpense
+// @Summary Удалить Трату
+// @Description Устанавливает флаг is_deleted = true для траты. Требуются права **Модератора**.
+// @Tags Домен трат
+// @Produce json
+// @Security ApiKeyAuth
+// @Security SessionCookie
+// @Param id path int true "ID траты"
+// @Success 204 "Успешное удаление"
+// @Failure 400 {object} handler.ErrorResponse"Неверный формат ID"
+// @Failure 403 {object} handler.ErrorResponse "Доступ запрещен (не модератор)"
+// @Failure 500 {object} handler.ErrorResponse "Ошибка сервера"
+// @Router /expenses/{id} [delete]
 func (h *Handler) DeleteExpense(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -104,11 +167,24 @@ func (h *Handler) DeleteExpense(ctx *gin.Context) {
 		h.errorhandler(ctx, http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": "Expense sucessfully deleted",
-	})
+	ctx.Status(http.StatusNoContent)
 }
 
+// UploadExpenseImage
+// @Summary Загрузить изображение траты
+// @Description Загружает и обновляет изображение для траты по ID. Требуются права **Модератора**.
+// @Tags Домен трат
+// @Accept multipart/form-data
+// @Produce json
+// @Security ApiKeyAuth
+// @Security SessionCookie
+// @Param id path int true "ID траты"
+// @Param file formData file true "Файл изображения"
+// @Success 200 {object} ds.ExpenseDTO "Успешная загрузка, возвращает обновленный трату"
+// @Failure 400 {object} handler.ErrorResponse "Ошибка загрузки/формата файла"
+// @Failure 403 {object} handler.ErrorResponse "Доступ запрещен (не модератор)"
+// @Failure 500 {object} handler.ErrorResponse "Ошибка Minio/сервера"
+// @Router /expenses/{id}/image [post]
 func (h *Handler) UploadExpenseImage(ctx *gin.Context) {
 	if h.MinioClient == nil {
 		h.errorhandler(ctx, http.StatusServiceUnavailable, fmt.Errorf("image storage service not configured"))
@@ -175,8 +251,22 @@ func (h *Handler) UploadExpenseImage(ctx *gin.Context) {
 	logrus.Infof("Succesfully updated expense %d with image %v", id, imageurl)
 	h.successResponse(ctx, updatedExpenseDTO)
 }
+
+// AddExpenseToCalc (в handler/expense.go, но относится к Заявкам)
+// @Summary Добавить трату в черновик заявки
+// @Description Добавляет трату в текущую черновую заявку пользователя. Требуется **Авторизация**.
+// @Tags Домен трат
+// @Produce json
+// @Security ApiKeyAuth
+// @Security SessionCookie
+// @Param id path int true "ID траты для добавления"
+// @Success 204 "Успешное добавление"
+// @Failure 400 {object} handler.ErrorResponse"Неверный формат ID"
+// @Failure 401 {object} handler.ErrorResponse "Неавторизован"
+// @Failure 500 {object} handler.ErrorResponse "Ошибка сервера (например, трата уже добавлен)"
+// @Router /expenses/add-to-calc/{id} [post]
 func (h *Handler) AddExpenseToCalc(ctx *gin.Context) {
-	userID := h.GetCurrentUserId()
+	userID := middleware.GetUserID(ctx)
 	//Получаем ID из формы
 	expenseIDstr := ctx.Param("id")
 	expenseID, err := strconv.Atoi(expenseIDstr)
@@ -194,7 +284,5 @@ func (h *Handler) AddExpenseToCalc(ctx *gin.Context) {
 		}
 		return
 	}
-	ctx.JSON(200, gin.H{
-		"message": "Added to Calc",
-	})
+	ctx.Status(http.StatusNoContent)
 }

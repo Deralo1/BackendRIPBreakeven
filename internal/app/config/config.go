@@ -13,6 +13,13 @@ type Config struct {
 	ServiceHost string `mapstructure:"service_host"`
 	ServicePort int    `mapstructure:"service_port"`
 	Minio       MinioConfig
+	JWT         JWTConfig   // Добавлено
+	Redis       RedisConfig // Добавлено
+}
+
+type JWTConfig struct {
+	SecretKey string `mapstructure:"secret_key"`
+	ExpiresIn string `mapstructure:"expires_in"`
 }
 
 type MinioConfig struct {
@@ -21,6 +28,12 @@ type MinioConfig struct {
 	SecretAccessKey string
 	BucketName      string
 	UseSSL          bool
+}
+
+type RedisConfig struct {
+	Addr     string
+	Password string
+	DB       int
 }
 
 func NewConfig() (*Config, error) {
@@ -49,6 +62,12 @@ func NewConfig() (*Config, error) {
 	viper.SetDefault("minio.usessl", os.Getenv("MINIO_USE_SSL") == "true")
 	viper.SetDefault("service_host", "localhost")
 	viper.SetDefault("service_port", 8082)
+
+	viper.SetDefault("jwt.secret_key", "your-super-secret-key-12345")
+	viper.SetDefault("jwt.expires_in", "1h")
+	viper.SetDefault("redis.addr", "localhost:6379")
+	viper.SetDefault("redis.password", "")
+	viper.SetDefault("redis.db", 0)
 
 	err = viper.ReadInConfig()
 	if err != nil {

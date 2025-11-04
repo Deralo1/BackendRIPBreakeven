@@ -1,2 +1,5 @@
 ServiceHost = "0.0.0.0"
 ServicePort = 8080
+
+SecretKey = "your-super-secret-key-12345"
+ExpiresIn = "2h30m"

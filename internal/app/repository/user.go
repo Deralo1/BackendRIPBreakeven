@@ -24,11 +24,19 @@ func (r *Repository) LoginUser(login, password string) (*ds.UserDTO, error) {
 	if err != nil {
 		return nil, fmt.Errorf("неверный логин или пароль")
 	}
+
+	role := ds.RoleCreator
+	if user.IsModerator {
+		role = ds.RoleModerator
+	}
+
 	return &ds.UserDTO{
 		UserId: user.UserId,
 		Login:  user.Login,
+		Role:   role,
 	}, nil
 }
+
 func (r *Repository) UpdateUser(userID int, userUpdate ds.ChangeUserDTO) (*ds.UserDTO, error) {
 	var user ds.User
 	err := r.db.Where(`"UserID" = ?`, userID).First(&user).Error
