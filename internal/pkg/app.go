@@ -32,12 +32,19 @@ func (a *Application) RunApp() {
 	a.Handler.RegisterHandler(a.Router)
 	a.Router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+	// ZeroTier IP + порт
 	serverAddress := fmt.Sprintf("%s:%d", a.Config.ServiceHost, a.Config.ServicePort)
 
-	logrus.Infof("Server listening on %s", serverAddress)
+	logrus.Infof("Server listening on %s (HTTPS)", serverAddress)
 
-	if err := a.Router.Run(serverAddress); err != nil {
-		logrus.Fatal("Failed to start server: ", err)
+	// Запуск HTTPS
+	err := a.Router.RunTLS(
+		serverAddress,
+		"certs/10.205.157.61.pem",
+		"certs/10.205.157.61-key.pem",
+	)
+	if err != nil {
+		logrus.Fatal("Failed to start HTTPS server: ", err)
 	}
 
 	logrus.Info("Server shut down")

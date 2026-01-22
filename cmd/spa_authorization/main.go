@@ -32,6 +32,7 @@ import (
 // @in cookie
 func main() {
 	router := gin.Default()
+
 	conf, err := config.NewConfig()
 	if err != nil {
 		logrus.Fatalf("error loading config: %v", err)

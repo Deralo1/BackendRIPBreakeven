@@ -76,7 +76,7 @@ func (r *Repository) GetListCalcByDateAndStatus(
 		query = query.Where(`"Creator_ID" = ?`, userID)
 	}
 	if role == ds.RoleModerator && userID != 0 {
-		query = query.Where(`"moderator_id" = ?`, userID)
+		query = query.Where(`"Moderator_Id" = ?`, userID)
 	}
 
 	// 🔹 Фильтрация по статусу

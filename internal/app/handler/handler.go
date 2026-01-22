@@ -58,6 +58,7 @@ func (h *Handler) successResponse(ctx *gin.Context, data interface{}) {
 
 // RegisterHandler Функция в которой мы отдельно регистрируем маршруты,чтобы не писать все в одном месте
 func (h *Handler) RegisterHandler(router *gin.Engine) {
+	router.Use(middleware.CORSMiddleware())
 	api := router.Group("api/v1")
 	{
 		// Траты

@@ -1,5 +1,5 @@
-ServiceHost = "0.0.0.0"
-ServicePort = 8080
+service_host = "0.0.0.0"
+service_port = 8080
 
-SecretKey = "your-super-secret-key-12345"
-ExpiresIn = "2h30m"
+jwt.secret_key = "your-super-secret-key-12345"
+jwt.expires_in = "2h30m"

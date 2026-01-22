@@ -76,6 +76,9 @@ func NewConfig() (*Config, error) {
 
 	cfg := &Config{}
 	err = viper.Unmarshal(cfg)
+	log.Infof("Loaded ServiceHost: %s", cfg.ServiceHost)
+	log.Infof("Loaded ServicePort: %d", cfg.ServicePort)
+
 	if err != nil {
 		return nil, err
 	}
