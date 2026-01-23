@@ -81,3 +81,8 @@ type AuthResponseDTO struct {
 	TokenType   string `json:"token_type"`
 	ExpiresIn   int64  `json:"expires_in"` // Unix timestamp истечения
 }
+type BreakevenResult struct {
+	ID           int    `json:"id"`
+	Breakeven    int    `json:"breakeven"`
+	BackendToken string `json:"backend_token"`
+}

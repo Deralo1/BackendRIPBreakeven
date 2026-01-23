@@ -59,7 +59,7 @@ func (h *Handler) successResponse(ctx *gin.Context, data interface{}) {
 // RegisterHandler Функция в которой мы отдельно регистрируем маршруты,чтобы не писать все в одном месте
 func (h *Handler) RegisterHandler(router *gin.Engine) {
 	router.Use(middleware.CORSMiddleware())
-	api := router.Group("api/v1")
+	api := router.Group("/api/v1")
 	{
 		// Траты
 		api.GET("/expenses", h.GetAllExpense)
@@ -72,7 +72,10 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 		api.POST("/user/register", h.RegisterUser)
 		api.POST("/user/login", h.LoginUser)
 
+		api.PUT("/breakeven-result", h.ReceiveBreakevenResult)
+
 	}
+	logrus.Infof("HostName = %s", h.HostName)
 
 	auth := router.Group("/api/v1")
 	auth.Use(middleware.AuthMiddleware(h.SecretKey, h.RedisClient))
@@ -86,7 +89,7 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 		auth.GET("/breakeven/:id", h.GetBreakeven)
 		auth.PUT("/breakeven/:id", h.PutBreakEven)
 		auth.PUT("/breakeven/:id/form", h.FormBreakEvenCalc)
-		auth.DELETE("breakeven/:id", h.DeleteBreakEvenCalc)
+		auth.DELETE("/breakeven/:id", h.DeleteBreakEvenCalc)
 
 		auth.POST("/expenses/add-to-calc/:id", h.AddExpenseToCalc)
 

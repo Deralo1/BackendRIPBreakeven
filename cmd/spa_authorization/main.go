@@ -6,6 +6,7 @@ import (
 	"Backeven/internal/app/dsn"
 	"Backeven/internal/app/handler"
 	"Backeven/internal/app/repository"
+	"Backeven/internal/middleware"
 	"Backeven/internal/pkg"
 	"context"
 	"fmt"
@@ -16,40 +17,32 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// @title Расчет точки безубыточности
-// @version 1.0
-// @description Бэкенд сервис для расчета точки безубыточности.
-// @host localhost:8082
-// @BasePath /api/v1
-// @schemes http
-// @securityDefinitions.apikey ApiKeyAuth
-// @in header
-// @name Authorization
-// @description Используется для запросов через Insomnia/Postman: "Bearer <JWT>"
-// @securityDefinitions.cookie SessionCookie
-// @name session_token
-// @description Используется для запросов из браузера.
-// @in cookie
 func main() {
-	router := gin.Default()
-
+	// 1. Загружаем конфиг
 	conf, err := config.NewConfig()
 	if err != nil {
 		logrus.Fatalf("error loading config: %v", err)
 	}
 
+	// 2. Инициализируем Redis
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     conf.Redis.Addr,
-		Password: "password",
+		Password: "password", // если есть
 		DB:       conf.Redis.DB,
 	})
 
-	_, err = rdb.Ping(context.Background()).Result()
-	if err != nil {
+	if _, err = rdb.Ping(context.Background()).Result(); err != nil {
 		logrus.Fatalf("Ошибка подключения к Redis: %v", err)
 	}
 	logrus.Info("Успешное подключение к Redis.")
 
+	// 3. Инициализируем Gin
+	router := gin.Default()
+
+	// 4. Подключаем middleware гостевой сессии
+	router.Use(middleware.GuestSessionMiddleware(rdb))
+
+	// 5. Остальная инициализация
 	postgresString := dsn.FromEnv()
 	fmt.Println(postgresString)
 
@@ -58,12 +51,7 @@ func main() {
 		logrus.Fatalf("error initializing repository: %v", errRep)
 	}
 
-	cfg, err := config.NewConfig()
-	if err != nil {
-		logrus.Fatal("Failed to load config: ", err)
-	}
-
-	minioClient, err := config.NewMinioClient(cfg.Minio)
+	minioClient, err := config.NewMinioClient(conf.Minio)
 	if err != nil {
 		logrus.Fatal("Failed to initialize Minio client: ", err)
 	}
@@ -85,5 +73,4 @@ func main() {
 
 	application := pkg.NewApp(conf, router, hand)
 	application.RunApp()
-
 }

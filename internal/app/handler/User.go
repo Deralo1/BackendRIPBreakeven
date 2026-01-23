@@ -52,30 +52,83 @@ func (h *Handler) RegisterUser(ctx *gin.Context) {
 // @Failure 401 {object} handler.ErrorResponse "Неавторизован"
 // @Router /user/login [post]
 func (h *Handler) LoginUser(ctx *gin.Context) {
+	logrus.Warn("LOGIN: вход в LoginUser()")
+
 	var input ds.ChangeUserDTO
 	if err := ctx.BindJSON(&input); err != nil {
+		logrus.Error("LOGIN: ошибка BindJSON:", err)
 		h.errorhandler(ctx, http.StatusBadRequest, err)
 		return
 	}
 
+	logrus.Warnf("LOGIN: получены данные: login=%s", input.Login)
+
 	if input.Login == "" || input.Password == "" {
+		logrus.Error("LOGIN: логин или пароль пустые")
 		h.errorhandler(ctx, http.StatusBadRequest, fmt.Errorf("логин и пароль обязательны"))
 		return
 	}
 
 	userDTO, err := h.Repository.LoginUser(input.Login, input.Password)
 	if err != nil {
+		logrus.Warn("LOGIN: неверный логин или пароль")
 		h.errorhandler(ctx, http.StatusUnauthorized, err)
 		return
 	}
 
-	tokenString, expTime, err := service.GenerateJWT(userDTO.UserId, userDTO.Role, h.SecretKey, h.JWTDur)
+	logrus.Warnf("LOGIN: пользователь найден: userID=%d role=%s", userDTO.UserId, userDTO.Role)
+
+	tokenString, expTime, err := service.GenerateJWT(
+		userDTO.UserId,
+		userDTO.Role,
+		h.SecretKey,
+		h.JWTDur,
+	)
 	if err != nil {
+		logrus.Error("LOGIN: ошибка генерации токена:", err)
 		h.errorhandler(ctx, http.StatusInternalServerError, fmt.Errorf("ошибка генерации токена: %w", err))
 		return
 	}
 
-	ctx.SetCookie("session_token", tokenString, int(expTime.Unix()), "/", h.HostName, false, true)
+	logrus.Warnf("LOGIN: токен сгенерирован: %s", tokenString)
+	logrus.Warnf("LOGIN: токен истекает в: %s", expTime)
+
+	// ============================
+	// 1. Записываем токен в Redis
+	// ============================
+	ttl := time.Until(expTime)
+	logrus.Warnf("LOGIN: TTL токена = %v", ttl)
+
+	logrus.Warnf("LOGIN: попытка записи токена в Redis: key=%s value=active ttl=%v", tokenString, ttl)
+	if err := h.Repository.SaveToken(ctx, tokenString, ttl); err != nil {
+		logrus.Error("LOGIN: ошибка записи токена в Redis:", err)
+		h.errorhandler(ctx, http.StatusInternalServerError, fmt.Errorf("ошибка Redis"))
+		return
+	}
+
+	logrus.Warn("LOGIN: токен успешно записан в Redis")
+
+	// ============================
+	// 2. Устанавливаем cookie
+	// ============================
+	logrus.Warnf("LOGIN: установка cookie session_token=%s", tokenString)
+
+	ctx.SetCookie(
+		"session_token",
+		tokenString,
+		int(ttl.Seconds()),
+		"/",
+		"",
+		true, // Secure
+		true, // HttpOnly
+	)
+
+	logrus.Warn("LOGIN: cookie успешно установлено")
+
+	// ============================
+	// 3. Возвращаем ответ
+	// ============================
+	logrus.Warn("LOGIN: отправка успешного ответа клиенту")
 
 	h.successResponse(ctx, ds.AuthResponseDTO{
 		AccessToken: tokenString,
@@ -96,11 +149,16 @@ func (h *Handler) LoginUser(ctx *gin.Context) {
 // @Router /user/profile [get]
 func (h *Handler) GetProfile(ctx *gin.Context) {
 	userID := middleware.GetUserID(ctx)
+	role := middleware.GetRole(ctx) // ← роль из JWT
+
 	userdto, err := h.Repository.GetUserByID(userID)
 	if err != nil {
 		h.errorhandler(ctx, http.StatusInternalServerError, err)
 		return
 	}
+
+	userdto.Role = role // ← вот это ключевой момент
+
 	h.successResponse(ctx, userdto)
 }
 

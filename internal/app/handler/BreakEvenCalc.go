@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -278,4 +279,39 @@ func (h *Handler) ProccessBreakEven(ctx *gin.Context) { // PUT какой-то �
 		return
 	}
 	h.successResponse(ctx, breakevenDTO)
+}
+
+func (h *Handler) ReceiveBreakevenResult(ctx *gin.Context) {
+	log.Println("=== ReceiveBreakevenResult START ===")
+
+	var body ds.BreakevenResult
+
+	if err := ctx.BindJSON(&body); err != nil {
+		log.Printf("ERROR: invalid JSON: %v\n", err)
+		h.errorhandler(ctx, 400, err)
+		return
+	}
+
+	log.Printf("Received from Rust: ID=%d, breakeven=%d, token=%s\n",
+		body.ID, body.Breakeven, body.BackendToken)
+
+	if body.BackendToken != "backend123" {
+		log.Println("ERROR: invalid backend token")
+		h.errorhandler(ctx, 401, fmt.Errorf("unauthorized"))
+		return
+	}
+
+	log.Println("Saving breakeven result to DB...")
+
+	if err := h.Repository.SaveBreakevenResult(body.ID, body.Breakeven); err != nil {
+		log.Printf("ERROR saving result: %v\n", err)
+		h.errorhandler(ctx, 500, err)
+		return
+	}
+
+	log.Println("Result saved successfully")
+
+	log.Println("=== ReceiveBreakevenResult END ===")
+
+	h.successResponse(ctx, gin.H{"message": "result saved"})
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -21,21 +22,75 @@ import (
 // @Failure 500 {object} handler.ErrorResponse "Ошибка сервера"
 // @Router /expenses [get]
 func (h *Handler) GetAllExpense(ctx *gin.Context) {
+	searchQuery := ctx.Query("BreakenevSearch")
+	filterRecent := ctx.Query("recent") == "true"
+
+	// 1. Получаем обычный список услуг
 	var services []ds.ExpenseDTO
 	var err error
 
-	searchQuery := ctx.Query("BreakenevSearch") // получаем значение из поля поиска
-
-	if searchQuery == "" { // если поле поиска пусто, то просто получаем из репозитория все записи
+	if searchQuery == "" {
 		services, err = h.Repository.GetAllExpense()
 	} else {
-		services, err = h.Repository.GetExpenseByTitle(searchQuery) // в ином случае ищем заказ по заголовку
+		services, err = h.Repository.GetExpenseByTitle(searchQuery)
 	}
+
 	if err != nil {
 		h.errorhandler(ctx, http.StatusInternalServerError, err)
 		return
 	}
+
+	// 2. Если нужен фильтр по недавно просмотренным
+	if filterRecent {
+		sessionID := ctx.GetString("guest_session")
+
+		// получаем ID просмотренных услуг
+		viewedIDs, _ := h.Repository.GetRecentlyViewedIDs(ctx.Request.Context(), sessionID)
+
+		if len(viewedIDs) == 0 {
+			h.successResponse(ctx, []ds.ExpenseDTO{})
+			return
+		}
+
+		// превращаем в set для быстрого поиска
+		viewedSet := make(map[int]bool)
+		for _, id := range viewedIDs {
+			viewedSet[id] = true
+		}
+
+		// фильтруем список
+		filtered := make([]ds.ExpenseDTO, 0)
+		for _, s := range services {
+			if viewedSet[s.ExpenseID] {
+				filtered = append(filtered, s)
+			}
+		}
+
+		h.successResponse(ctx, filtered)
+		return
+	}
+
+	// 3. Если фильтр не включён — возвращаем обычный список
 	h.successResponse(ctx, services)
+}
+
+func (h *Handler) AddViewedExpense(ctx *gin.Context) {
+	sessionID := ctx.GetString("guest_session")
+	expenseID := ctx.Param("id")
+
+	key := "guest:" + sessionID + ":viewed"
+
+	// удаляем дубликаты
+	h.RedisClient.LRem(ctx, key, 0, expenseID)
+
+	// добавляем в начало
+	h.RedisClient.LPush(ctx, key, expenseID)
+
+	// храним только последние 10
+	h.RedisClient.LTrim(ctx, key, 0, 9)
+
+	// обновляем TTL
+	h.RedisClient.Expire(ctx, key, 20*time.Minute)
 }
 
 // GetExpenseByID
@@ -49,6 +104,7 @@ func (h *Handler) GetAllExpense(ctx *gin.Context) {
 // @Failure 404 {object} handler.ErrorResponse "Трата не найден"
 // @Router /expenses/{id} [get]
 func (h *Handler) GetExpenseByID(ctx *gin.Context) {
+	h.AddViewedExpense(ctx)
 	idStr := ctx.Param("id") // получаем id заказа из урла
 	// через двоеточие мы указываем параметры, которые потом сможем считать через функцию выше
 	id, err := strconv.Atoi(idStr) // так как функция выше возвращает нам строку, нужно ее преобразовать в int

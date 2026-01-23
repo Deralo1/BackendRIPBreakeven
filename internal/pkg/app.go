@@ -37,6 +37,10 @@ func (a *Application) RunApp() {
 
 	logrus.Infof("Server listening on %s (HTTPS)", serverAddress)
 
+	/*err := a.Router.Run(serverAddress)
+	if err != nil {
+		logrus.Fatal("Failed to start HTTP server: ", err)
+	}*/
 	// Запуск HTTPS
 	err := a.Router.RunTLS(
 		serverAddress,

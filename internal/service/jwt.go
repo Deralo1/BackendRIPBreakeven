@@ -28,12 +28,19 @@ func GenerateJWT(userID int, role ds.UserRole, secretKey string, duration time.D
 
 func ExtractToken(ctx *gin.Context) string {
 	authHeader := ctx.GetHeader("Authorization")
+
+	// 1. Если формат корректный: "Bearer <token>"
 	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
 		return authHeader[7:]
 	}
 
-	cookie, err := ctx.Cookie("session_token")
-	if err == nil {
+	// 2. Если токен передан без Bearer
+	if authHeader != "" {
+		return authHeader
+	}
+
+	// 3. Если токен лежит в cookie
+	if cookie, err := ctx.Cookie("session_token"); err == nil {
 		return cookie
 	}
 

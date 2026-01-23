@@ -2,9 +2,12 @@ package repository
 
 import (
 	"Backeven/internal/app/ds"
-	"Backeven/internal/service"
+	"bytes"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
 	"time"
 )
 
@@ -72,12 +75,13 @@ func (r *Repository) GetListCalcByDateAndStatus(
 	query := r.db.Where(`"BreakEvenStatus" != 'удалён' AND "BreakEvenStatus" != 'черновик'`)
 
 	// 🔹 Фильтрация по роли и userID
+	// 🔹 Фильтрация по роли и userID
 	if role == ds.RoleCreator && userID != 0 {
 		query = query.Where(`"Creator_ID" = ?`, userID)
 	}
-	if role == ds.RoleModerator && userID != 0 {
-		query = query.Where(`"Moderator_Id" = ?`, userID)
-	}
+
+	// 🔥 Модератор видит все заявки, кроме черновиков и удалённых
+	// поэтому НИЧЕГО не добавляем
 
 	// 🔹 Фильтрация по статусу
 	if status != "" {
@@ -200,7 +204,7 @@ func (r *Repository) FormByCreatorBreakEvenCalc(id uint) error {
 		return fmt.Errorf("количество продуктов не может быть ноль")
 	}
 	var count int64
-	err = r.db.Model(&ds.BreakevenRequest{}).Where(`"BreakevenRequestID" = ?`, id).Count(&count).Error
+	err = r.db.Model(&ds.ExpenseForRequest{}).Where(`"BreakevenRequestID" = ?`, id).Count(&count).Error
 	if err != nil {
 		return err
 	}
@@ -229,79 +233,157 @@ func (r *Repository) GetExpensesInCalcCount(UserId int) int {
 }
 
 func (r *Repository) ProccessBreakEvenRequest(id uint, moderatorID int, action string) (*ds.BreakevenRequestDTO, error) {
-	var CalcBreakEven ds.BreakevenRequest
 
-	CalcBreakEven.ModeratorID = sql.NullInt64{Int64: int64(moderatorID), Valid: true}
+	log.Println("=== START ProccessBreakEvenRequest ===")
+	log.Printf("Input: id=%d, moderatorID=%d, action=%s\n", id, moderatorID, action)
 
+	var req ds.BreakevenRequest
+
+	// Загружаем заявку
 	err := r.db.Where(`"BreakevenRequestID" = ?`, id).
-		Preload("Moderator").
 		Preload("Creator").
 		Preload("RequestExpense").
 		Preload("RequestExpense.Expense").
-		First(&CalcBreakEven).
-		Error
+		First(&req).Error
+
 	if err != nil {
+		log.Printf("ERROR: cannot load request: %v\n", err)
 		return nil, err
 	}
 
-	if CalcBreakEven.BreakevenRequestStatus != "сформирован" {
-		return nil, fmt.Errorf("заявка не может быть обработана, так как ожидается статус сформирован. Ee текущий статус: %s", CalcBreakEven.BreakevenRequestStatus)
+	log.Printf("Loaded request: ID=%d, Status=%s, AmountProduct=%d\n",
+		req.BreakevenRequestID, req.BreakevenRequestStatus, req.AmountProduct)
+
+	// Проверяем статус
+	if req.BreakevenRequestStatus != "сформирован" {
+		log.Printf("ERROR: wrong status: %s\n", req.BreakevenRequestStatus)
+		return nil, fmt.Errorf("ожидается статус 'сформирован'")
 	}
-	CalcBreakEven.ModeratorID = sql.NullInt64{Int64: int64(moderatorID), Valid: true}
+
+	// Обновляем модератора
+	req.ModeratorID = sql.NullInt64{Int64: int64(moderatorID), Valid: true}
 
 	switch action {
+
 	case "complete":
-		// Считаем ТБУ
-		breakeven, err := service.CalculateAnswer(&CalcBreakEven)
-		if err != nil {
-			return nil, err
+		log.Println("Action: complete → preparing JSON for Rust")
+
+		// Меняем статус на "в расчёте"
+		req.BreakevenRequestStatus = "в расчёте"
+		req.FormatedAt = sql.NullTime{Time: time.Now(), Valid: true}
+
+		// Готовим JSON для Rust
+		type RustExpense struct {
+			TypeSpend     int `json:"type_spend"`
+			AmountService int `json:"amount_service"`
+			Expense       struct {
+				Price int `json:"price"`
+			} `json:"expense"`
 		}
-		CalcBreakEven.CalcAnswer = breakeven
-		CalcBreakEven.BreakevenRequestStatus = "завершён"
-		CalcBreakEven.CompletedAt = sql.NullTime{Time: time.Now(), Valid: true}
+
+		rustExpenses := make([]RustExpense, 0)
+
+		log.Println("Building expenses for Rust:")
+		for _, e := range req.RequestExpense {
+			log.Printf("  ExpenseID=%d, Type=%d, Amount=%d, Price=%d\n",
+				e.ExpenseID, e.TypeSpend, e.AmountService, e.Expense.Price)
+
+			re := RustExpense{
+				TypeSpend:     e.TypeSpend,
+				AmountService: e.AmountService,
+			}
+			re.Expense.Price = e.Expense.Price
+			rustExpenses = append(rustExpenses, re)
+		}
+
+		rustReq := map[string]interface{}{
+			"id":              req.BreakevenRequestID,
+			"auth_token":      "secret123",
+			"amount_product":  req.AmountProduct,
+			"request_expense": rustExpenses,
+		}
+
+		jsonValue, _ := json.MarshalIndent(rustReq, "", "  ")
+		log.Println("JSON sent to Rust:")
+		log.Println(string(jsonValue))
+
+		// Отправляем в Rust асинхронно
+		go func() {
+			resp, err := http.Post(
+				"http://10.205.157.61:8083/calculateBreakeven",
+				"application/json",
+				bytes.NewBuffer(jsonValue),
+			)
+			if err != nil {
+				log.Printf("ERROR sending to Rust: %v\n", err)
+				return
+			}
+			log.Printf("Rust response status: %s\n", resp.Status)
+		}()
+
 	case "reject":
-		CalcBreakEven.BreakevenRequestStatus = "отклонён"
+		log.Println("Action: reject")
+		req.BreakevenRequestStatus = "отклонён"
+
 	default:
-		return nil, fmt.Errorf("действие %s недопустимо, допустимые действия 'complete' и 'reject'", action)
+		log.Printf("ERROR: invalid action: %s\n", action)
+		return nil, fmt.Errorf("недопустимое действие")
 	}
-	err = r.db.Save(&CalcBreakEven).Error
+
+	// Сохраняем изменения
+	if err := r.db.Save(&req).Error; err != nil {
+		log.Printf("ERROR saving request: %v\n", err)
+		return nil, err
+	}
+
+	log.Printf("Saved request: ID=%d, NewStatus=%s\n",
+		req.BreakevenRequestID, req.BreakevenRequestStatus)
+	// После сохранения — повторно загружаем заявку с расходами
+	var updated ds.BreakevenRequest
+	err = r.db.Where(`"BreakevenRequestID" = ?`, id).
+		Preload("Creator").
+		Preload("Moderator").
+		Preload("RequestExpense").
+		Preload("RequestExpense.Expense").
+		First(&updated).Error
 	if err != nil {
 		return nil, err
 	}
-	var moderatorLogin string
-	if CalcBreakEven.ModeratorID.Valid {
-		// Прямой запрос логина пользователя по id
-		err = r.db.Table("users").Where(`"UserID" = ?`, CalcBreakEven.ModeratorID.Int64).Select(`"Login"`).Scan(&moderatorLogin).Error
-		if err != nil {
-			moderatorLogin = ""
-		}
-	}
+
+	// DTO
 	dto := ds.BreakevenRequestDTO{
-		BreakevenRequestID:     CalcBreakEven.BreakevenRequestID,
-		BreakevenRequestStatus: CalcBreakEven.BreakevenRequestStatus,
-		CreationDate:           CalcBreakEven.CreationDate,
-		CreatorLogin:           CalcBreakEven.Creator.Login,
-		AmountProduct:          CalcBreakEven.AmountProduct,
-		CalcAnswer:             CalcBreakEven.CalcAnswer,
+		BreakevenRequestID:     req.BreakevenRequestID,
+		BreakevenRequestStatus: req.BreakevenRequestStatus,
+		CreationDate:           req.CreationDate,
+		CreatorLogin:           req.Creator.Login,
+		AmountProduct:          req.AmountProduct,
+		CalcAnswer:             req.CalcAnswer,
 	}
-	if CalcBreakEven.FormatedAt.Valid {
-		dto.FormatedAt = &CalcBreakEven.FormatedAt.Time
+
+	if req.FormatedAt.Valid {
+		dto.FormatedAt = &req.FormatedAt.Time
 	}
-	if CalcBreakEven.CompletedAt.Valid {
-		dto.CompletedAt = &CalcBreakEven.CompletedAt.Time
+	if req.CompletedAt.Valid {
+		dto.CompletedAt = &req.CompletedAt.Time
 	}
-	// Присваиваем логин
-	if moderatorLogin == "" {
-		dto.ModeratorLogin = &moderatorLogin
-	}
-	for _, ce := range CalcBreakEven.RequestExpense {
-		dto.RequestExpense = append(dto.RequestExpense, ds.ExpenseForRequestDTO{
-			ExpenseID:     ce.ExpenseID,
-			Title:         ce.Expense.Title,
-			ImageURL:      ce.Expense.ImageURL,
-			AmountService: ce.AmountService,
-			TypeSpend:     ce.TypeSpend,
-		})
-	}
+
+	log.Println("=== END ProccessBreakEvenRequest ===")
+
 	return &dto, nil
+}
+
+func (r *Repository) SaveBreakevenResult(id int, breakeven int) error {
+	var req ds.BreakevenRequest
+
+	if err := r.db.
+		Where(`"BreakevenRequestID" = ?`, id).
+		First(&req).Error; err != nil {
+		return err
+	}
+
+	req.CalcAnswer = breakeven
+	req.BreakevenRequestStatus = "завершён"
+	req.CompletedAt = sql.NullTime{Time: time.Now(), Valid: true}
+
+	return r.db.Save(&req).Error
 }

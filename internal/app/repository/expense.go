@@ -2,7 +2,9 @@ package repository
 
 import (
 	"Backeven/internal/app/ds"
+	"context"
 	"fmt"
+	"strconv"
 )
 
 func (r *Repository) GetAllExpense() ([]ds.ExpenseDTO, error) {
@@ -165,4 +167,52 @@ func (r *Repository) AddExpenseToCalc(UserID, expenseID int) error {
 		TypeSpend:          1,
 	}
 	return r.db.Create(&item).Error
+}
+func (r *Repository) GetRecentlyViewed(ctx context.Context, sessionID string) ([]ds.ExpenseDTO, error) {
+	key := "guest:" + sessionID + ":viewed"
+
+	ids, err := r.rdb.LRange(ctx, key, 0, 9).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(ids) == 0 {
+		return []ds.ExpenseDTO{}, nil
+	}
+
+	var expenses []ds.Expense
+	err = r.db.Where(`"ExpenseID" IN ?`, ids).Find(&expenses).Error
+	if err != nil {
+		return nil, err
+	}
+
+	dtos := make([]ds.ExpenseDTO, len(expenses))
+	for i, e := range expenses {
+		dtos[i] = ds.ExpenseDTO{
+			ExpenseID:        e.ExpenseID,
+			Title:            e.Title,
+			ImageURL:         e.ImageURL,
+			Price:            e.Price,
+			ShortDescription: e.ShortDescription,
+			Description:      e.Description,
+		}
+	}
+
+	return dtos, nil
+}
+func (r *Repository) GetRecentlyViewedIDs(ctx context.Context, sessionID string) ([]int, error) {
+	key := "guest:" + sessionID + ":viewed"
+
+	idsStr, err := r.rdb.LRange(ctx, key, 0, 9).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	ids := make([]int, 0, len(idsStr))
+	for _, s := range idsStr {
+		id, _ := strconv.Atoi(s)
+		ids = append(ids, id)
+	}
+
+	return ids, nil
 }

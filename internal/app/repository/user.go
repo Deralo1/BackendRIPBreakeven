@@ -2,7 +2,9 @@ package repository
 
 import (
 	"Backeven/internal/app/ds"
+	"context"
 	"fmt"
+	"time"
 )
 
 func (r *Repository) RegisterUser(input ds.ChangeUserDTO) error {
@@ -35,6 +37,13 @@ func (r *Repository) LoginUser(login, password string) (*ds.UserDTO, error) {
 		Login:  user.Login,
 		Role:   role,
 	}, nil
+}
+
+// ============================
+// Сохраняем токен в Redis
+// ============================
+func (r *Repository) SaveToken(ctx context.Context, token string, ttl time.Duration) error {
+	return r.rdb.Set(ctx, token, "active", ttl).Err()
 }
 
 func (r *Repository) UpdateUser(userID int, userUpdate ds.ChangeUserDTO) (*ds.UserDTO, error) {
